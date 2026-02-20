@@ -9,6 +9,9 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
+# Chat history 
+CHAT_HISTORY:list[dict] = []
+
 # ---- Config ----
 COSMIC_URL = os.getenv("COSMIC_URL", "http://host.docker.internal:3000/cosmic")
 TIMEOUT_SECS = float(os.getenv("COSMIC_TIMEOUT", "60"))
@@ -71,12 +74,18 @@ async def chat(request: Request):
 
     user_message = payload.get("user_message")
     user = payload.get("user") or DEFAULT_USER
+    CHAT_HISTORY.append({"role": "user", "content": user_message})
+    # messages = payload.get("messages") or []
 
     if not isinstance(user_message, str) or not user_message.strip():
         raise HTTPException(status_code=400, detail="user_message is required")
 
     outgoing = {
-        "body": {"user": user},
+        "body": {"user": user, 
+                 'messages': CHAT_HISTORY[-5:]  # send last 5 messages as context; adjust as needed,
+                #  "messages":[ {"role": "user", "content": "We are talking about Ayrton Senna"},
+                            #  {"role": "assistant", "content": "Yes, we are talking about the F1 legend Ayrton Senna"}]
+                 },
         "user_message": user_message,
     }
 
@@ -89,6 +98,7 @@ async def chat(request: Request):
             )
             ct = (upstream.headers.get("content-type") or "").lower()
             text = upstream.text
+            CHAT_HISTORY.append({"role": "assistant", "content": json.loads(text).get("result", "")})
             if "application/json" in ct:
                 # Forward JSON as-is
                 return JSONResponse(status_code=upstream.status_code, content=upstream.json())

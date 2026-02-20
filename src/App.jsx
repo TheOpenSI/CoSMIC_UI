@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 
 // We call the backend in the same container at /api/chat
 const API_PATH = "/api/chat";
-// const baseUrl = process.env.OPENSI_COSMIC_API_BASE_URL || "http://cosmic:3000";
 
 // Default user; you can also pass this from the backend if you prefer.
 const DEFAULT_USER = {
