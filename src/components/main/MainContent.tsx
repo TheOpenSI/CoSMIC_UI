@@ -51,6 +51,7 @@ export default function MainContent() {
               {isLoading ? (
                 <Button
                   danger
+                  type="primary"
                   onClick={handleStop}
                   className="flex items-center justify-center gap-2"
                 >
