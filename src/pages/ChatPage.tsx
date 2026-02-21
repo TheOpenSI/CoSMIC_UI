@@ -3,7 +3,7 @@ import Sidebar from "../components/sidebar/Sidebar";
 
 export default function ChatPage() {
   return (
-    <div className=" flex ">
+    <div className=" flex h-screen overflow-hidden ">
       <Sidebar />
       <MainContent />
     </div>

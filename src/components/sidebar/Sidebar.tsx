@@ -1,3 +1,9 @@
+import IconRail from "./Iconrail";
+
 export default function Sidebar() {
-  return <div>Sidebar</div>;
+  return (
+    <div className="flex h-screen">
+      <IconRail />
+    </div>
+  );
 }
