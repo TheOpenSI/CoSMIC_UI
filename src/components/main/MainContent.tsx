@@ -48,7 +48,7 @@ export default function MainContent() {
               <Paperclip size={18} />
             </button>
             <div className="absolute -right-2">
-              {isLoading ? (
+              {isLoading && (
                 <Button
                   danger
                   type="primary"
@@ -57,7 +57,9 @@ export default function MainContent() {
                 >
                   Stop <CirclePause size={15} />
                 </Button>
-              ) : message.trim() ? (
+              )}
+
+              {!isLoading && message.trim() && (
                 <Button
                   type="primary"
                   onClick={handleSend}
@@ -65,7 +67,7 @@ export default function MainContent() {
                 >
                   Send <Send size={15} />
                 </Button>
-              ) : null}
+              )}
             </div>
           </div>
         </div>
