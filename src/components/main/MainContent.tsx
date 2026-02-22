@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import type { Message } from "../../types/message";
 import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
-import { GiPlanetCore } from "react-icons/gi";
 
 const { TextArea } = Input;
 
@@ -65,7 +64,7 @@ export default function MainContent() {
             </div>
           )}
           {messages.length > 0 && (
-            <div className="flex gap-6 flex-col">
+            <div className="flex gap-6 flex-col ">
               <div className="flex items-center gap-16">
                 <div className="flex-1 h-px bg-gray-200" />
                 <span className="text-gray-400 text-sm">
@@ -83,7 +82,7 @@ export default function MainContent() {
                           <div className="bg-[#E6E7EB] rounded-full p-2 mt-1">
                             <BsPersonFill color="#6B7281" size={20} />
                           </div>
-                          <div className="mt-1 bg-[#0065F4] text-white px-4 py-2 rounded-2xl text-sm">
+                          <div className="mt-1 bg-[#0065F4] text-white px-4 py-2 rounded-2xl text-sm wrap-break-word max-w-172">
                             {msg.content}
                           </div>
                         </div>
@@ -93,7 +92,7 @@ export default function MainContent() {
                           <div className="bg-black rounded-full p-1.5 mt-1 text-amber-50">
                             <Orbit size={22} />
                           </div>
-                          <div className="mt-1 text-gray-800 px-1 py-2 text-sm">
+                          <div className="mt-1 text-gray-800 px-1 py-2 text-sm wrap-break-word max-w-172">
                             {msg.content}
                           </div>
                         </div>
