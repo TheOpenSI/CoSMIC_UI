@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Message } from "../../types/message";
 import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
+import { GiPlanetCore } from "react-icons/gi";
 
 const { TextArea } = Input;
 
@@ -89,8 +90,8 @@ export default function MainContent() {
                       )}
                       {!isUser && (
                         <div className=" flex gap-3 items-start">
-                          <div className="bg-black rounded-full p-2 mt-1 text-amber-50">
-                            <Orbit size={20} />
+                          <div className="bg-black rounded-full p-1.5 mt-1 text-amber-50">
+                            <Orbit size={22} />
                           </div>
                           <div className="mt-1 text-gray-800 px-1 py-2 text-sm">
                             {msg.content}
