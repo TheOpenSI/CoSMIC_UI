@@ -1,25 +1,26 @@
 import { Layout } from "antd";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
+import { SidebarProvider } from "../providers/SidebarProvider";
 
 const { Content } = Layout;
 
 const MainLayout = () => {
   return (
-    <Layout
-      style={{
-        height: "100vh",
-        overflow: "hidden",
-        background: "#FFFFFF",
-      }}
-    >
-      <Sidebar />
-      <Content style={{ marginLeft: 48 }}>
-        <div>
+    <SidebarProvider>
+      <Layout
+        style={{
+          height: "100vh",
+          overflow: "hidden",
+          background: "#FFFFFF",
+        }}
+      >
+        <Sidebar />
+        <Content style={{ marginLeft: 48 }}>
           <Outlet />
-        </div>
-      </Content>
-    </Layout>
+        </Content>
+      </Layout>
+    </SidebarProvider>
   );
 };
 
