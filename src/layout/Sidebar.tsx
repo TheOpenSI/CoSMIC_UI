@@ -17,9 +17,9 @@ export default function Sidebar() {
         height: "100vh",
         zIndex: 100,
         background: "transparent",
-        cursor: "e-resize",
+        cursor: isOpen ? "default" : "e-resize",
       }}
-      onClick={toggle}
+      onClick={!isOpen ? toggle : undefined}
     >
       <IconRail />
     </Sider>
