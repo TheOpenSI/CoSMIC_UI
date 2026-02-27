@@ -1,46 +1,54 @@
 import { Layout } from "antd";
 import { Outlet } from "react-router-dom";
-import Sidebar from "./Sidebar";
-import { SidebarProvider } from "../providers/SidebarProvider";
+
 import ChatHistoryPanel from "../components/sidebar/ChatHistoryPanel";
-import { useSidebar } from "../hooks/useSidebar";
+import { useSidebarStore } from "../stores/SidebarStore";
+import Sidebar from "./Sidebar";
 
 const { Content } = Layout;
+const SIDEBAR_WIDTH = 60;
+const CHAT_PANEL_WIDTH = 420;
 
 const MainLayout = () => {
-  const { isOpen } = useSidebar();
+  const isOpen = useSidebarStore((s) => s.isOpen);
+  const leftWidth = isOpen ? SIDEBAR_WIDTH + CHAT_PANEL_WIDTH : SIDEBAR_WIDTH;
+
   return (
-    <SidebarProvider>
-      <Layout
+    <Layout style={{ height: "100vh", overflow: "hidden", background: "#fff" }}>
+      <div
         style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
           height: "100vh",
-          overflow: "hidden",
-          background: "#FFFFFF",
+          width: leftWidth,
+          zIndex: 100,
+          display: "flex",
+          transition: "width 0.25s ease",
         }}
       >
-        <Sidebar />
-
-        <div
-          style={{
-            position: "fixed",
-            left: 48,
-            top: 0,
-            width: isOpen ? 320 : 0,
-            height: "100vh",
-            overflow: "hidden",
-            transition: "width 200ms ease",
-            zIndex: 15,
-            background: "#F0F5F9",
-            borderRight: isOpen ? "1px solid #f0f0f0" : "none",
-          }}
-        >
-          <ChatHistoryPanel />
+        <div style={{ width: SIDEBAR_WIDTH, flexShrink: 0 }}>
+          <Sidebar />
         </div>
-        <Content style={{ marginLeft: 48 }}>
-          <Outlet />
-        </Content>
-      </Layout>
-    </SidebarProvider>
+
+        {isOpen && (
+          <div style={{ width: CHAT_PANEL_WIDTH, flexShrink: 0 }}>
+            <ChatHistoryPanel />
+          </div>
+        )}
+      </div>
+
+      <Content
+        style={{
+          marginLeft: leftWidth,
+          transition: "margin-left 0.25s ease",
+          height: "100vh",
+          overflow: "hidden",
+        }}
+      >
+        <Outlet />
+      </Content>
+    </Layout>
   );
 };
 

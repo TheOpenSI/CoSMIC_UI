@@ -1,23 +1,27 @@
 import {
   MessageCircleMore,
-  PanelRightClose,
-  Plus,
   UserRound,
   UserKey,
+  PanelRightClose,
+  Plus,
 } from "lucide-react";
-import { useSidebar } from "../../hooks/useSidebar";
-import { useNavigate, useLocation } from "react-router-dom";
+
+import { useNavigate } from "react-router-dom";
+import { useSidebarStore } from "../../stores/SidebarStore";
 
 export default function IconRail() {
-  const { isOpen } = useSidebar();
+  const { isOpen } = useSidebarStore((state) => ({
+    isOpen: state.isOpen,
+    // open: state.open,
+    // close: state.close,
+  }));
   const navigate = useNavigate();
-  const location = useLocation();
 
   const navItems = [
     {
       icon: <MessageCircleMore color="#545A6A" size={18} />,
       label: "Chats",
-      path: "/chats",
+      path: "/",
     },
     {
       icon: <UserKey color="#545A6A" size={18} />,
