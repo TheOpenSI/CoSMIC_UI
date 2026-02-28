@@ -10,6 +10,8 @@ type SidebarStore = {
   openAdmin: () => void;
   openChatPanel: () => void;
   collapseChatPanel: () => void;
+
+  goNone: () => void;
 };
 
 export const useSidebarStore = create<SidebarStore>((set) => ({
@@ -21,4 +23,5 @@ export const useSidebarStore = create<SidebarStore>((set) => ({
   openChatPanel: () => set({ active: "chats", isOpen: true }),
 
   collapseChatPanel: () => set({ active: "none", isOpen: false }),
+  goNone: () => set({ active: "none", isOpen: false }),
 }));

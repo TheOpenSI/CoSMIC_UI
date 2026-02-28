@@ -1,7 +1,8 @@
 import {
   ArrowRightToLine,
-  MessageCircleMore,
-  Plus,
+  CircleFadingPlus,
+  MessagesSquare,
+  Undo2,
   UserKey,
   UserRound,
 } from "lucide-react";
@@ -14,12 +15,15 @@ export default function Sidebar() {
   const open = useSidebarStore((state) => state.open);
   const openChatPanel = useSidebarStore((state) => state.openChatPanel);
   const openAdmin = useSidebarStore((state) => state.openAdmin);
-
   const active = useSidebarStore((s) => s.active);
+  const goNone = useSidebarStore((s) => s.goNone);
+
   const chatsSelected = active === "chats";
   const adminSelected = active === "admin";
 
   const handleRailClick = () => {
+    if (isOpen) return;
+
     if (active === "none" || active === "chats") {
       openChatPanel();
       navigate("/");
@@ -51,18 +55,30 @@ export default function Sidebar() {
     `}
       >
         <div className="w-full flex flex-col items-center gap-1 ">
-          {!isOpen && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                openChatPanel();
-                navigate("/");
-              }}
-              className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
-            >
-              <ArrowRightToLine color="#545A6A" size={18} />
-            </button>
-          )}
+          {!isOpen &&
+            (active === "none" ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openChatPanel();
+                  navigate("/");
+                }}
+                className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
+              >
+                <ArrowRightToLine color="#545A6A" size={18} />
+              </button>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goNone();
+                  navigate("/");
+                }}
+                className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
+              >
+                <Undo2 color="#545A6A" size={18} />
+              </button>
+            ))}
           {!isOpen && (
             <button
               onClick={(e) => {
@@ -70,7 +86,7 @@ export default function Sidebar() {
               }}
               className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer "
             >
-              <Plus color="#545A6A" size={18} />
+              <CircleFadingPlus color="#545A6A" size={18} />
             </button>
           )}
 
@@ -82,7 +98,7 @@ export default function Sidebar() {
             }}
             className={`p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer  ${isOpen ? "px-2.5 py-1.5 flex-col " : "p-2"}${chatsSelected ? "bg-gray-300" : "hover:bg-gray-300"}`}
           >
-            <MessageCircleMore color="#545A6A" size={18} />
+            <MessagesSquare color="#545A6A" size={18} />
             {isOpen && <span className="text-[10px] mt-0.5">Chats</span>}
           </button>
 
