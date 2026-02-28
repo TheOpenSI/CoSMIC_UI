@@ -1,9 +1,7 @@
 import {
   ArrowRightToLine,
   CircleFadingPlus,
-  MessagesSquare,
   Undo2,
-  UserKey,
   UserRound,
 } from "lucide-react";
 import { useSidebarStore } from "../stores/SidebarStore";
@@ -98,8 +96,31 @@ export default function Sidebar() {
             }}
             className={`p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer  ${isOpen ? "px-2.5 py-1.5 flex-col " : "p-2"}${chatsSelected ? "bg-gray-300" : "hover:bg-gray-300"}`}
           >
-            <MessagesSquare color="#545A6A" size={18} />
-            {isOpen && <span className="text-[10px] mt-0.5">Chats</span>}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke={chatsSelected ? "#111827" : "#545A6A"}
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              className="lucide lucide-messages-square-icon lucide-messages-square"
+            >
+              <path
+                d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"
+                fill={chatsSelected ? "#111827" : "none"}
+              />
+              <path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" />
+            </svg>{" "}
+            {isOpen && (
+              <span
+                className={`text-[10px] mt-0.5 ${chatsSelected ? "font-bold" : ""}`}
+              >
+                Chats
+              </span>
+            )}
           </button>
 
           <button
@@ -114,8 +135,36 @@ export default function Sidebar() {
     ${adminSelected ? "bg-gray-300" : "hover:bg-gray-300"}
   `}
           >
-            <UserKey color="#545A6A" size={18} />
-            {isOpen && <span className="text-[10px] mt-0.5">Admin</span>}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height=""
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke={adminSelected ? "#111827" : "#545A6A"}
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              className="lucide lucide-user-key-icon lucide-user-key"
+            >
+              <path d="M20 11v6" />
+              <path d="M20 13h2" />
+              <path d="M3 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 2.072.578" />
+              <circle cx="10" cy="7" r="4" />
+              <circle
+                cx="20"
+                cy="19"
+                r="2"
+                fill={adminSelected ? "#111827" : "none"}
+              />
+            </svg>
+            {isOpen && (
+              <span
+                className={`text-[10px] mt-0.5 ${adminSelected ? "font-bold" : ""}`}
+              >
+                Admin
+              </span>
+            )}
           </button>
         </div>
         <button
