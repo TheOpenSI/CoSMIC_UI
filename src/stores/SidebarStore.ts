@@ -1,13 +1,24 @@
 import { create } from "zustand";
 
+type ActivePanel = "none" | "chats" | "admin";
+
 type SidebarStore = {
   isOpen: boolean;
   open: () => void;
-  close: () => void;
+
+  active: ActivePanel;
+  openAdmin: () => void;
+  openChatPanel: () => void;
+  collapseChatPanel: () => void;
 };
 
 export const useSidebarStore = create<SidebarStore>((set) => ({
   isOpen: false,
   open: () => set({ isOpen: true }),
-  close: () => set({ isOpen: false }),
+
+  active: "none",
+  openAdmin: () => set({ active: "admin" }),
+  openChatPanel: () => set({ active: "chats", isOpen: true }),
+
+  collapseChatPanel: () => set({ active: "none", isOpen: false }),
 }));

@@ -1,7 +1,8 @@
 import { ArrowLeftToLine, Search } from "lucide-react";
 import { useSidebarStore } from "../../stores/SidebarStore";
+
 export default function ChatHistoryPanel() {
-  const close = useSidebarStore((state) => state.close);
+  const collapseChatPanel = useSidebarStore((state) => state.collapseChatPanel);
 
   const chats = [
     {
@@ -28,7 +29,7 @@ export default function ChatHistoryPanel() {
           New Chat
         </button>
         <button
-          onClick={close}
+          onClick={collapseChatPanel}
           className="p-1.5 cursor-pointer hover:bg-[#E2E8ED] rounded-lg"
         >
           <ArrowLeftToLine size={25} color="#545A6A" />
