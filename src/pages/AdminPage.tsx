@@ -1,7 +1,7 @@
-import { Cpu, Settings, UsersRound } from "lucide-react";
+import { ChartCandlestick, Cpu, Settings, UsersRound } from "lucide-react";
 import { useState } from "react";
-import UsersPage from "./UsersPage";
-import ConfigsPage from "./ConfigsPage";
+import UsersPage from "./admin_sub_pages/UsersPage";
+import ConfigsPage from "./admin_sub_pages/ConfigsPage";
 
 export default function AdminPage() {
   const [active, setActive] = useState<
@@ -30,7 +30,7 @@ export default function AdminPage() {
     {
       key: "analytics",
       label: "Analytics",
-      icon: Settings,
+      icon: ChartCandlestick,
       onClick: () => setActive("analytics"),
     },
   ];

@@ -113,7 +113,7 @@ export default function Sidebar() {
                 fill={chatsSelected ? "#111827" : "none"}
               />
               <path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" />
-            </svg>{" "}
+            </svg>
             {isOpen && (
               <span
                 className={`text-[10px] mt-0.5 ${chatsSelected ? "font-bold" : ""}`}
