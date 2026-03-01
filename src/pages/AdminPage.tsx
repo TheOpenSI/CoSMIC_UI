@@ -2,6 +2,8 @@ import { ChartCandlestick, Cpu, Settings, UsersRound } from "lucide-react";
 import { useState } from "react";
 import UsersPage from "./admin_sub_pages/UsersPage";
 import ConfigsPage from "./admin_sub_pages/ConfigsPage";
+import ModelsPage from "./admin_sub_pages/ModelsPage";
+import AnalyticsPage from "./admin_sub_pages/AnalyticsPage";
 
 export default function AdminPage() {
   const [active, setActive] = useState<
@@ -38,8 +40,8 @@ export default function AdminPage() {
   const pages = {
     users: <UsersPage />,
     configs: <ConfigsPage />,
-    models: <ConfigsPage />,
-    analytics: <ConfigsPage />,
+    models: <ModelsPage />,
+    analytics: <AnalyticsPage />,
   };
 
   return (
