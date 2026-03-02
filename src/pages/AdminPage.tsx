@@ -46,7 +46,7 @@ export default function AdminPage() {
 
   return (
     <div className="h-full flex">
-      <aside className="w-60 px-4 py-5">
+      <aside className="w-60 px-4 py-5 overflow-hidden">
         <div className="text-[13px] font-semibold text-[#60768D] mb-0.5 pl-2">
           Admin Panel
         </div>
@@ -72,7 +72,7 @@ export default function AdminPage() {
         </div>
       </aside>
 
-      <main className="flex-1 px-4 py-5">{pages[active]}</main>
+      <main className="flex-1 px-4 py-5 overflow-auto">{pages[active]}</main>
     </div>
   );
 }
