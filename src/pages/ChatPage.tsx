@@ -1,10 +1,13 @@
-import { Button, Input } from "antd";
+import { Button, Input, Spin } from "antd";
 import { ChevronDown, CirclePause, Orbit, Paperclip, Send } from "lucide-react";
+import { LoadingOutlined } from "@ant-design/icons";
 
 import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
 import { useState } from "react";
 import type { Message } from "../types/message";
+import { sendMessage } from "../api/chatCosmic";
+import ReactMarkdown from "react-markdown";
 
 const { TextArea } = Input;
 
@@ -26,19 +29,34 @@ export default function ChatPage() {
     setMessage("");
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const aiReply = await sendMessage(userText);
+
       setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: "Hello! This is a test reply.",
+          content: aiReply,
         },
       ]);
-      setIsLoading(false);
-    }, 1200);
+    } catch (err) {
+      console.error(err);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "Something went wrong.",
+        },
+      ]);
+    }
+
+    setIsLoading(false);
   };
 
+  // handle stop
   const handleStop = () => setIsLoading(false);
 
   return (
@@ -77,7 +95,7 @@ export default function ChatPage() {
                           <div className="bg-[#E6E7EB] rounded-full p-2 mt-1">
                             <BsPersonFill color="#6B7281" size={20} />
                           </div>
-                          <div className="mt-1 bg-[#0065F4] text-white px-4 py-2 rounded-2xl text-sm wrap-break-word max-w-172">
+                          <div className="mt-1 bg-[#0079FF] text-white px-4 py-2 rounded-2xl text-sm wrap-break-word max-w-172">
                             {msg.content}
                           </div>
                         </div>
@@ -87,14 +105,27 @@ export default function ChatPage() {
                           <div className="bg-black rounded-full p-1.5 mt-1 text-amber-50">
                             <Orbit size={22} />
                           </div>
-                          <div className="mt-1 text-gray-800 px-1 py-2 text-sm wrap-break-word max-w-172">
-                            {msg.content}
+                          <div className="mt-1 text-gray-800 px-1 py-2 text-sm wrap-break-word max-w-172 prose prose-sm">
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
                           </div>
                         </div>
                       )}
                     </div>
                   );
                 })}
+                {isLoading && (
+                  <div className="flex gap-3 items-start mb-6">
+                    <div className="mt-2 flex items-center gap-2 text-gray-400 text-sm">
+                      <Spin
+                        indicator={
+                          <LoadingOutlined spin style={{ color: "#DBDCDF" }} />
+                        }
+                        size="small"
+                      />
+                      <span>Cosmic is thinking..</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
