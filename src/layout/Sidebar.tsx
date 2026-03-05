@@ -130,10 +130,10 @@ export default function Sidebar() {
               navigate("/admin");
             }}
             className={`
-    flex items-center justify-center rounded-xl cursor-pointer
-    ${isOpen ? "px-2.5 py-1.5 flex-col" : "p-2"}
-    ${adminSelected ? "bg-gray-300" : "hover:bg-gray-300"}
-  `}
+              flex items-center justify-center rounded-xl cursor-pointer
+              ${isOpen ? "px-2 py-1.5 flex-col" : "p-2"}
+              ${adminSelected ? "bg-gray-300" : "hover:bg-gray-300"}
+            `}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

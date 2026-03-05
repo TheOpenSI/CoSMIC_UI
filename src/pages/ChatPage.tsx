@@ -1,10 +1,11 @@
 import { Button, Input, Spin } from "antd";
 import { ChevronDown, CirclePause, Orbit, Paperclip, Send } from "lucide-react";
 import { LoadingOutlined } from "@ant-design/icons";
+import { v4 as uuidv4 } from "uuid";
 
 import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Message } from "../types/message";
 import { sendMessage } from "../api/chatCosmic";
 import ReactMarkdown from "react-markdown";
@@ -15,38 +16,50 @@ export default function ChatPage() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleSend = async () => {
     if (!message.trim()) return;
 
     const userText = message.trim();
+    abortControllerRef.current = new AbortController();
 
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now().toString(), role: "user", content: userText },
-    ]);
+    // chatHistory (putting each message into messages[]): current messages + new user message
+    // 1. if new message from user, push the new message into the array
+    const updatedHistory: Message[] = [
+      ...messages,
+      { id: uuidv4(), role: "user", content: userText },
+    ];
 
+    setMessages(updatedHistory);
     setMessage("");
     setIsLoading(true);
 
+    // 2. then we wait for AI to reply
     try {
-      const aiReply = await sendMessage(userText);
+      const aiReply = await sendMessage(
+        userText,
+        updatedHistory,
+        abortControllerRef.current.signal,
+      );
 
+      // 3. after that, push AI reply into messages
       setMessages((prev) => [
         ...prev,
         {
-          id: (Date.now() + 1).toString(),
+          id: uuidv4(),
           role: "assistant",
           content: aiReply,
         },
       ]);
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       console.error(err);
 
       setMessages((prev) => [
         ...prev,
         {
-          id: (Date.now() + 1).toString(),
+          id: uuidv4(),
           role: "assistant",
           content: "Something went wrong.",
         },
@@ -56,8 +69,10 @@ export default function ChatPage() {
     setIsLoading(false);
   };
 
-  // handle stop
-  const handleStop = () => setIsLoading(false);
+  const handleStop = () => {
+    abortControllerRef.current?.abort();
+    setIsLoading(false);
+  };
 
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden">
@@ -122,7 +137,7 @@ export default function ChatPage() {
                         }
                         size="small"
                       />
-                      <span>Cosmic is thinking..</span>
+                      <span>Cosmic is thinking...</span>
                     </div>
                   </div>
                 )}
@@ -163,7 +178,7 @@ export default function ChatPage() {
                 </Button>
               )}
 
-              {!isLoading && message.trim() && (
+              {!isLoading && (
                 <Button
                   type="primary"
                   onClick={handleSend}
