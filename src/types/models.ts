@@ -9,3 +9,10 @@ export type OllamaModelsResponse = {
   models: OllamaModel[];
   total: number;
 };
+
+export type PullProgress = {
+  status: string;
+  percent: number | null;
+  completed: number;
+  total: number;
+};
