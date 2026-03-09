@@ -1,32 +1,45 @@
-import { Table } from "antd";
+import { Button, Table } from "antd";
 import { useEffect, useState } from "react";
-import { getOllamaModels } from "../../api/models";
+import { deleteOneModel, getOllamaModels } from "../../api/models";
 import type { OllamaModel } from "../../types/models";
 import "../../styles/table.css";
 import { LoadingOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { PackagePlus } from "lucide-react";
+import { message } from "antd";
 
 export default function ModelsPage() {
   const [ollaModels, setOllamaModels] = useState<OllamaModel[]>([]);
   const [totalModels, setTotalModels] = useState(0);
   const [loading, setLoading] = useState(false);
 
+  const loadModels = async () => {
+    try {
+      setLoading(true);
+      const data = await getOllamaModels();
+      setOllamaModels(data.models);
+      setTotalModels(data.total);
+    } catch (error) {
+      console.error("Failed to load models:", error);
+      message.error("Failed to load models");
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const loadModels = async () => {
-      try {
-        setLoading(true);
-        const data = await getOllamaModels();
-        setOllamaModels(data.models);
-        setTotalModels(data.total);
-      } catch (error) {
-        console.error("Failed to load models:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadModels();
   }, []);
+
+  const handleDelete = async (model: string) => {
+    try {
+      await deleteOneModel(model);
+      message.success("Model deleted");
+      await loadModels();
+    } catch (error) {
+      console.error(error);
+      message.error("Delete failed");
+    }
+  };
 
   const columns = [
     {
@@ -53,9 +66,18 @@ export default function ModelsPage() {
     },
     {
       title: "Action",
-      dataIndex: "",
-      key: "x",
-      render: () => <a>Delete</a>,
+      key: "action",
+      render: (_: unknown, record: OllamaModel) => (
+        <Button
+          type="text"
+          danger
+          onClick={() => {
+            handleDelete(record.model);
+          }}
+        >
+          Delete
+        </Button>
+      ),
     },
   ];
 
@@ -67,7 +89,13 @@ export default function ModelsPage() {
       </div>
       <div className=" flex flex-col gap-1">
         <div className="flex justify-between ">
-          <div>Total models count: {totalModels}</div>
+          <div>
+            Total models count:{" "}
+            <span className="text-[#0079FF]">{totalModels}</span>
+          </div>
+          <button className="flex items-center justify-center gap-1 mr-1 text-[#8C8C8C] hover:text-[#0079FF] cursor-pointer">
+            <PackagePlus size={15} /> <span>Add new model</span>
+          </button>
         </div>
         <Table
           columns={columns}

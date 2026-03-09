@@ -9,3 +9,9 @@ export async function getOllamaModels(): Promise<OllamaModelsResponse> {
   console.log(response);
   return response;
 }
+
+export async function deleteOneModel(model: string) {
+  return fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/models/${model}`, {
+    method: "DELETE",
+  });
+}
