@@ -7,7 +7,7 @@ import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
 import { useRef, useState } from "react";
 import type { Message } from "../types/message";
-import { sendMessage } from "../api/chatCosmic";
+import { sendMessage } from "../api/chat";
 import ReactMarkdown from "react-markdown";
 
 const { TextArea } = Input;
