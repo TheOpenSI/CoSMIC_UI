@@ -1,0 +1,10 @@
+node_modules
+dist
+.yarn/cache
+
+.git
+.vscode
+.idea
+
+.env
+.DS_Store
