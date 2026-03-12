@@ -16,7 +16,7 @@ services:
       - WATCHPACK_POLLING=true
       - NODE_ENV=development
       # If your app reads VITE_ vars, you can pass them here or from .env
-      - VITE_API_BASE_URL=http://localhost:3000
+      - VITE_API_BASE_URL=http://cosmic:3000
     volumes:
       # Bind-mount your source for live reload
       - .:/app
