@@ -89,7 +89,7 @@ export default function ModelsPage() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
         <div className="text-3xl font-bold">Models</div>
-        <div>View, create and delete your models</div>
+        <div>View, pull and delete your models</div>
       </div>
       <div className=" flex flex-col gap-1 mt-3">
         <div className="flex justify-between ">

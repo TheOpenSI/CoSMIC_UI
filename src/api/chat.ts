@@ -28,3 +28,15 @@ export async function sendMessage(
   console.log(res.result);
   return res.result;
 }
+
+// {
+//   "user_message": "Hello",
+//   "body": {
+//     "user": {
+//       "id": 1,
+//       "role": "admin",
+//       "email": "smanileee@gmail.com"
+//     },
+//     "messages": []
+//   }
+// }

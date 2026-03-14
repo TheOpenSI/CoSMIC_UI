@@ -1,48 +1,24 @@
 import { ChartCandlestick, Cpu, Settings, UsersRound } from "lucide-react";
-import { useState } from "react";
-import UsersPage from "./admin_sub_pages/UsersPage";
-import ConfigsPage from "./admin_sub_pages/ConfigsPage";
-import ModelsPage from "./admin_sub_pages/ModelsPage";
-import AnalyticsPage from "./admin_sub_pages/AnalyticsPage";
+import { NavLink } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 
 export default function AdminPage() {
-  const [active, setActive] = useState<
-    "users" | "configs" | "models" | "analytics"
-  >("users");
-
   const subNavItems = [
-    {
-      key: "users",
-      label: "Users",
-      icon: UsersRound,
-      onClick: () => setActive("users"),
-    },
+    { key: "users", label: "Users", icon: UsersRound, path: "/admin/users" },
     {
       key: "configs",
       label: "Configs",
       icon: Settings,
-      onClick: () => setActive("configs"),
+      path: "/admin/configs",
     },
-    {
-      key: "models",
-      label: "Models",
-      icon: Cpu,
-      onClick: () => setActive("models"),
-    },
+    { key: "models", label: "Models", icon: Cpu, path: "/admin/models" },
     {
       key: "analytics",
       label: "Analytics",
       icon: ChartCandlestick,
-      onClick: () => setActive("analytics"),
+      path: "/admin/analytics",
     },
   ];
-
-  const pages = {
-    users: <UsersPage />,
-    configs: <ConfigsPage />,
-    models: <ModelsPage />,
-    analytics: <AnalyticsPage />,
-  };
 
   return (
     <div className="h-full flex">
@@ -54,25 +30,30 @@ export default function AdminPage() {
         <div className="flex flex-col gap-1">
           {subNavItems.map((item) => {
             const Icon = item.icon;
-            const selected = active === item.key;
 
             return (
-              <button
-                key={item.key}
-                onClick={item.onClick}
-                className={`w-full flex items-center gap-2 px-3 py-3 rounded-lg text-[15px] transition-colors ${
-                  selected ? "bg-[#E7E8EB]" : "hover:bg-[#F1F2F4]"
-                } text-[#111827]`}
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  `block w-full gap-2 px-3 py-2 rounded-lg text-[13px]
+     no-underline transition-colors ${
+       isActive ? "bg-[#E7E8EB]!" : "hover:bg-[#F1F2F4]!"
+     } text-[#111827]`
+                }
               >
-                <Icon size={15} className="text-[#111827]" />
-                <span className="leading-none">{item.label}</span>
-              </button>
+                <div className=" flex items-center gap-2">
+                  <Icon size={15} className="text-[#111827]" />
+                  <span className="text-[#111827]">{item.label}</span>
+                </div>
+              </NavLink>
             );
           })}
         </div>
       </aside>
 
-      <main className="flex-1 px-4 py-5 overflow-auto">{pages[active]}</main>
+      <main className="flex-1 px-4 py-5 overflow-auto">
+        <Outlet />
+      </main>
     </div>
   );
 }
