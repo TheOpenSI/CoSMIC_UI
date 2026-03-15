@@ -19,7 +19,6 @@ export default function ModelsPage() {
 
   const [downloadingModel, setDownloadingModel] = useState<string | null>(null);
   const [downloadStatus, setDownloadStatus] = useState("");
-  const [downloadPercent, setDownloadPercent] = useState(0);
 
   const loadModels = async () => {
     try {
@@ -60,8 +59,9 @@ export default function ModelsPage() {
 
     try {
       await pullOllamaModels(name, (data) => {
-        setDownloadStatus(data.status);
-        if (data.percent !== null) setDownloadPercent(data.percent);
+        if (data.type === "log") {
+          setDownloadStatus(data.message!);
+        }
       });
 
       message.success("Model downloaded!");
@@ -72,7 +72,6 @@ export default function ModelsPage() {
     } finally {
       setDownloadingModel(null);
       setDownloadStatus("");
-      setDownloadPercent(0);
     }
   };
 
@@ -172,10 +171,8 @@ export default function ModelsPage() {
             <span className="font-semibold text-sm">{downloadingModel}</span>
           </div>
 
-          <span className="text-xs text-gray-400">{downloadStatus}</span>
-
           <span className="text-sm text-[#0079FF] font-medium">
-            {downloadPercent}%
+            {downloadStatus}
           </span>
         </div>
       )}

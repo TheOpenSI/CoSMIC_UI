@@ -1,12 +1,12 @@
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   // smanile: need to have token for authentication: will implement later on
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  // const controller = new AbortController();
+  // const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const response = await fetch(url, {
       ...options,
-      signal: controller.signal,
+      // signal: controller.signal,
       headers: {
         ...options.headers,
         "Content-Type": "application/json",
@@ -18,7 +18,8 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   } catch (error) {
     console.error(error);
     throw error;
-  } finally {
-    clearTimeout(timeout);
   }
+  //  finally {
+  //   // clearTimeout(timeout);
+  // }
 }

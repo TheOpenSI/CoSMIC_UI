@@ -10,9 +10,9 @@ export type OllamaModelsResponse = {
   total: number;
 };
 
-export type PullProgress = {
+export interface PullProgress {
+  type: "log" | "progress" | "done" | "error";
+  message: string;
+  percent: number;
   status: string;
-  percent: number | null;
-  completed: number;
-  total: number;
-};
+}
