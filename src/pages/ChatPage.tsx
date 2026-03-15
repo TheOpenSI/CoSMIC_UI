@@ -160,6 +160,10 @@ export default function ChatPage() {
                 padding: 0,
               },
             }}
+            onPressEnter={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
           />
 
           <div className="relative flex items-center mt-5">

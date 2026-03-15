@@ -1,42 +1,29 @@
 import { Button, Input, Modal } from "antd";
 import { useEffect, useState } from "react";
-import {
-  deleteOneModel,
-  getOllamaModels,
-  pullOllamaModels,
-} from "../../api/models";
-import type { OllamaModel } from "../../types/models";
+import { deleteOneModel, pullOllamaModels } from "../../api/models";
+
 import { HardDriveDownload, PackagePlus, Trash2, Cpu } from "lucide-react";
 import { message } from "antd";
 import dayjs from "dayjs";
+import { useOllamaModelStore } from "../../stores/OllamaModelsStore";
 
 export default function ModelsPage() {
-  const [ollaModels, setOllamaModels] = useState<OllamaModel[]>([]);
-  const [totalModels, setTotalModels] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const {
+    models: ollaModels,
+    total: totalModels,
+    loading,
+    loadModels,
+  } = useOllamaModelStore();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modelName, setModelName] = useState("");
 
   const [downloadingModel, setDownloadingModel] = useState<string | null>(null);
   const [downloadStatus, setDownloadStatus] = useState("");
 
-  const loadModels = async () => {
-    try {
-      setLoading(true);
-      const data = await getOllamaModels();
-      setOllamaModels(data.models);
-      setTotalModels(data.total);
-    } catch (error) {
-      console.error("Failed to load models:", error);
-      message.error("Failed to load models");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     loadModels();
-  }, []);
+  }, [loadModels]);
 
   const handleDelete = async (model: string) => {
     try {
@@ -88,7 +75,7 @@ export default function ModelsPage() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
         <div className="text-3xl font-bold">Models</div>
-        <div>View, pull and delete your models</div>
+        <div>View, pull, and delete your models</div>
       </div>
       <div className=" flex flex-col gap-1 mt-3">
         <div className="flex justify-between ">

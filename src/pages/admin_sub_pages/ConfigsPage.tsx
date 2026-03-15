@@ -1,160 +1,229 @@
-import { Button, Checkbox, InputNumber, Select, Upload } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import { Button, Checkbox, Form, InputNumber, message, Select } from "antd";
+import { useOllamaModelStore } from "../../stores/OllamaModelsStore";
+import { useEffect, useState } from "react";
+import type { ConfigFormValues, ConfigPayload } from "../../types/configs";
+import { updateConfig } from "../../api/configs";
 
 export default function ConfigsPage() {
+  const [form] = Form.useForm();
+  const { models, loadModels } = useOllamaModelStore();
+  const [sameAsAbove, setSameAsAbove] = useState(false);
+
+  useEffect(() => {
+    if (models.length === 0) {
+      loadModels();
+    }
+  }, [models.length, loadModels]);
+  const onSave = async (values: ConfigFormValues) => {
+    const payload: ConfigPayload = {
+      llm_name: `${values.llm}:${values.model}`,
+      is_quantized: values.quantized ?? false,
+      seed: values.seed ?? 0,
+      service: -1,
+      doc_directory: "",
+      document_path: "",
+      sameasabove: sameAsAbove,
+      query_analyser: {
+        llm_name: sameAsAbove
+          ? `${values.llm}:${values.model}`
+          : `${values.qa_llm}:${values.qa_model}`,
+        is_quantized: sameAsAbove
+          ? (values.quantized ?? false)
+          : (values.qa_quantized ?? false),
+      },
+      chess: {
+        stockfish_path: values.stockfish_path ?? "",
+      },
+      rag: {
+        topk: values.topk ?? 10,
+        retrieve_score_threshold: values.retrieve_score_threshold ?? 0.7,
+        vector_db_path: "backend/data/vector_db_cosmic",
+      },
+      openai: {
+        api_key: "",
+      },
+    };
+    console.log("sending:", JSON.stringify(payload, null, 2)); // 👈 check this
+
+    try {
+      await updateConfig(payload);
+      message.success("Config saved!");
+      form.resetFields();
+    } catch (error) {
+      console.log(error);
+      message.error("Failed to save config!");
+    }
+  };
+
+  const handleSameAsAbove = (checked: boolean) => {
+    setSameAsAbove(checked);
+    if (checked) {
+      form.setFieldsValue({
+        qa_llm: form.getFieldValue("llm"),
+        qa_model: form.getFieldValue("model"),
+        qa_quantized: form.getFieldValue("quantized"),
+      });
+    }
+  };
   return (
-    <div className="flex flex-col">
-      <div className="text-xl font-bold mb-4">CoSMIC Settings</div>
-      <div className=" flex flex-col gap-7">
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1.5 mb-3">
+        <div className="text-3xl font-bold">CoSMIC Settings</div>
+        <div>Config the parameters of CoSMIC</div>
+      </div>
+
+      <Form form={form} layout="vertical" onFinish={onSave}>
         {/* General */}
-        <div className=" flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5">
           <div className="text-lg font-semibold mb-1">General</div>
-          <div className="flex flex-col gap-1.5">
-            <div>Choose an LLM</div>
+
+          <Form.Item
+            name="llm"
+            label="Choose an LLM"
+            style={{ marginBottom: 8 }}
+          >
             <Select
-              className="cosmic-select"
               placeholder="Please select one LLM"
-              style={{
-                width: "100%",
-              }}
-              options={[
-                { value: "ollama", label: "ollama" },
-                { value: "openai", label: "openai" },
-              ]}
+              options={[{ value: "ollama", label: "ollama" }]}
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <div>Select a model</div>
+          </Form.Item>
+
+          <Form.Item
+            name="model"
+            label="Select a model"
+            style={{ marginBottom: 8 }}
+          >
             <Select
               placeholder="Please select one model"
-              className="cosmic-select"
-              style={{
-                width: "100%",
-              }}
               options={[
                 {
                   label: "Available Models in the machine",
-                  options: [
-                    { value: "qwen2.5", label: "qwen2.5" },
-                    { value: "phi3.5", label: "phi3.5" },
-                  ],
+                  options: models.map((model) => ({
+                    value: model.model,
+                    label: model.model,
+                  })),
                 },
               ]}
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <div>Quantized</div>
+          </Form.Item>
+
+          <Form.Item
+            name="quantized"
+            valuePropName="checked"
+            label="Quantized"
+            style={{ marginBottom: 8 }}
+          >
             <Checkbox>Enable quantized model</Checkbox>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <div>Random Seed for LLM</div>
+          </Form.Item>
+
+          <Form.Item
+            name="seed"
+            label="Random Seed for LLM"
+            style={{ marginBottom: 8 }}
+          >
             <InputNumber
-              className="cosmic-input"
               style={{ width: "100%" }}
               min={0}
               step={1}
               placeholder="Enter an integer value no less than 0"
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <div>Choose the service(s)</div>
+          </Form.Item>
+
+          <Form.Item name="services" label="Choose the service(s)">
             <Select
               mode="multiple"
               allowClear
-              style={{ width: "100%" }}
               placeholder="Please select services"
               options={[
-                { value: "chess", label: "chess" },
+                { value: "chess", label: "Chess" },
                 { value: "RAG", label: "RAG" },
+                { value: "vector_database", label: "Vector Database" },
               ]}
             />
-          </div>
+          </Form.Item>
         </div>
 
-        {/* Query Analyser */}
-        <div className=" flex flex-col gap-1.5">
+        {/*Query Analyser */}
+        <div className="flex flex-col gap-1.5">
           <div className="text-lg font-semibold mb-1">Query Analyser</div>
-
-          <Checkbox>Same as the above</Checkbox>
-
-          <div className="flex flex-col gap-1.5">
-            <div>Choose an LLM</div>
+          <Checkbox
+            checked={sameAsAbove}
+            onChange={(e) => handleSameAsAbove(e.target.checked)}
+          >
+            Same as above
+          </Checkbox>
+          <Form.Item
+            name="qa_llm"
+            label="Choose an LLM"
+            style={{ marginBottom: 8 }}
+          >
             <Select
-              className="cosmic-select"
               placeholder="Please select one LLM"
-              style={{
-                width: "100%",
-              }}
-              options={[
-                { value: "ollama", label: "ollama" },
-                { value: "openai", label: "openai" },
-              ]}
+              options={[{ value: "ollama", label: "ollama" }]}
+              disabled={sameAsAbove}
             />
-          </div>
+          </Form.Item>
 
-          <div className="flex flex-col gap-1.5">
-            <div>Select a model</div>
+          <Form.Item
+            name="qa_model"
+            label="Select a model"
+            style={{ marginBottom: 8 }}
+          >
             <Select
               placeholder="Please select one model"
-              className="cosmic-select"
-              style={{
-                width: "100%",
-              }}
+              disabled={sameAsAbove}
               options={[
                 {
                   label: "Available Models in the machine",
-                  options: [
-                    { value: "qwen2.5", label: "qwen2.5" },
-                    { value: "phi3.5", label: "phi3.5" },
-                  ],
+                  options: models.map((model) => ({
+                    value: model.model,
+                    label: model.model,
+                  })),
                 },
               ]}
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <div>Quantized</div>
-            <Checkbox>Enable quantized model</Checkbox>
-          </div>
+          </Form.Item>
+
+          <Form.Item
+            name="qa_quantized"
+            valuePropName="checked"
+            label="Quantized"
+          >
+            <Checkbox disabled={sameAsAbove}>Enable quantized model</Checkbox>
+          </Form.Item>
         </div>
 
         {/* Chess */}
-        <div className=" flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5">
           <div className="text-lg font-semibold mb-1">Chess</div>
-          <div className="flex flex-col gap-1.5">
-            <div>Select the Stockfish executable file</div>
-            <Upload>
-              <Button icon={<UploadOutlined />}>Click to Upload</Button>
-            </Upload>
-          </div>
+
+          <Form.Item
+            name="stockfish_path"
+            label="Select the Stockfish executable file"
+          ></Form.Item>
         </div>
-        <div className=" flex flex-col gap-1.5">
+
+        {/* RAG */}
+        <div className="flex flex-col gap-1.5">
           <div className="text-lg font-semibold mb-1">RAG</div>
-          <div className="flex flex-col gap-1.5">
-            <div>Top-K</div>
-            <InputNumber
-              className="cosmic-input"
-              style={{ width: "100%" }}
-              min={0}
-              step={1}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <div>
-              Retrieve Score Threshold (enter a value between 0 and 1, default
-              is 0.7)
-            </div>
-            <InputNumber
-              className="cosmic-input"
-              style={{ width: "100%" }}
-              min={0}
-              step={1}
-            />
-          </div>
-          <div className="flex flex-col mt-4 ">
-            <Button type="primary">Save</Button>
-          </div>
+          <Form.Item name="topk" label="Top-k" style={{ marginBottom: 8 }}>
+            <InputNumber style={{ width: "100%" }} min={0} step={1} />
+          </Form.Item>
+          <Form.Item
+            name="retrieve_score_threshold"
+            label="Retrieve Score Threshold (enter a value between 0 and 1, default is 0.7)"
+          >
+            <InputNumber style={{ width: "100%" }} min={0} step={1} />
+          </Form.Item>
         </div>
-      </div>
+
+        {/* Save Button */}
+        <Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            Save
+          </Button>
+        </Form.Item>
+      </Form>
     </div>
   );
 }
