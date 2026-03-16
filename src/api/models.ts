@@ -43,6 +43,11 @@ export async function pullOllamaModels(
 
     onmessage(event) {
       const data: PullProgress = JSON.parse(event.data);
+      // console.log(event);
+      // console.log(data);
+      if (data.type === "error") {
+        throw new Error(data.message);
+      }
       onProgress(data);
     },
 

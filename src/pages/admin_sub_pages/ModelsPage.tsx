@@ -47,15 +47,17 @@ export default function ModelsPage() {
     try {
       await pullOllamaModels(name, (data) => {
         if (data.type === "log") {
-          setDownloadStatus(data.message!);
+          setDownloadStatus(data.message);
         }
       });
 
       message.success("Model downloaded!");
       await loadModels();
     } catch (error) {
-      console.log(error);
-      message.error("Download failed!");
+      const errorMessage =
+        error instanceof Error ? error.message : "Download failed!";
+
+      message.error(errorMessage);
     } finally {
       setDownloadingModel(null);
       setDownloadStatus("");

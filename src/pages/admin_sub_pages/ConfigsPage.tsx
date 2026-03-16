@@ -207,13 +207,24 @@ export default function ConfigsPage() {
         <div className="flex flex-col gap-1.5">
           <div className="text-lg font-semibold mb-1">RAG</div>
           <Form.Item name="topk" label="Top-k" style={{ marginBottom: 8 }}>
-            <InputNumber style={{ width: "100%" }} min={0} step={1} />
+            <InputNumber
+              style={{ width: "100%" }}
+              min={0}
+              step={1}
+              placeholder="Enter an integer value no less than 0"
+            />
           </Form.Item>
           <Form.Item
             name="retrieve_score_threshold"
             label="Retrieve Score Threshold (enter a value between 0 and 1, default is 0.7)"
           >
-            <InputNumber style={{ width: "100%" }} min={0} step={1} />
+            <InputNumber
+              style={{ width: "100%" }}
+              min={0}
+              max={1}
+              step={1}
+              placeholder="Enter a value between 0 and 1, default is 0.7"
+            />
           </Form.Item>
         </div>
 
