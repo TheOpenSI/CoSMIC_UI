@@ -1,0 +1,21 @@
+# Dev Dockerfile for Vite + React with Yarn
+FROM node:20-alpine
+
+WORKDIR /app
+# Enable Yarn (works for Yarn v1 and Berry)
+RUN corepack enable
+
+# Install dependencies first (cache-friendly)
+COPY package.json yarn.lock ./
+
+
+RUN yarn install --frozen-lockfile
+
+# Copy source (compose will also bind-mount; this keeps container usable without compose)
+COPY . .
+
+# Expose Vite dev default port and HMR port
+EXPOSE 5173 24678
+
+# Default command for dev; compose can override
+CMD ["yarn", "dev", "--host", "--port", "5173"]
