@@ -160,9 +160,11 @@ export default function ChatPage() {
                 padding: 0,
               },
             }}
-            onPressEnter={(e) => {
-              e.preventDefault();
-              handleSend();
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
             }}
           />
 
