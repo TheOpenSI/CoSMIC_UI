@@ -10,10 +10,9 @@ export default function ConfigsPage() {
   const [sameAsAbove, setSameAsAbove] = useState(false);
 
   useEffect(() => {
-    if (models.length === 0) {
-      loadModels();
-    }
-  }, [models.length, loadModels]);
+    loadModels();
+  }, [loadModels]);
+
   const onSave = async (values: ConfigFormValues) => {
     const payload: ConfigPayload = {
       llm_name: `${values.llm}:${values.model}`,
