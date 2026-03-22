@@ -496,11 +496,6 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@microsoft/fetch-event-source@^2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@microsoft/fetch-event-source/-/fetch-event-source-2.0.1.tgz#9ceecc94b49fbaa15666e38ae8587f64acce007d"
-  integrity sha512-W6CLUJ2eBMw3Rec70qrsEW0jOm/3twwJv21mrmj2yORiaVmVYGS4sSS5yUwvQc1ZlDLYGPnClVWmUUMagKNsfA==
-
 "@napi-rs/wasm-runtime@^1.1.1":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@napi-rs/wasm-runtime/-/wasm-runtime-1.1.1.tgz#c3705ab549d176b8dc5172723d6156c3dc426af2"
@@ -1152,6 +1147,18 @@
     "@tailwindcss/node" "4.2.0"
     "@tailwindcss/oxide" "4.2.0"
     tailwindcss "4.2.0"
+
+"@tanstack/query-core@5.94.5":
+  version "5.94.5"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.94.5.tgz#4857cb0b0add6089ad69a894afde019ad7aa17d4"
+  integrity sha512-Vx1JJiBURW/wdNGP45afjrqn0LfxYwL7K/bSrQvNRtyLGF1bxQPgUXCpzscG29e+UeFOh9hz1KOVala0N+bZiA==
+
+"@tanstack/react-query@^5.94.5":
+  version "5.94.5"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.94.5.tgz#69f45ecae33e775e71fab212ff5aa72b570fd9da"
+  integrity sha512-1wmrxKFkor+q8l+ygdHmv0Sq5g84Q3p4xvuJ7AdSIAhQQ7udOt+ZSZ19g1Jea3mHqtlTslLGJsmC4vHFgP0P3A==
+  dependencies:
+    "@tanstack/query-core" "5.94.5"
 
 "@tybys/wasm-util@^0.10.1":
   version "0.10.1"
