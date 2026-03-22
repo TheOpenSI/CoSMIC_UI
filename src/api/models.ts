@@ -1,20 +1,20 @@
-import { fetchEventSource } from "@microsoft/fetch-event-source";
-import type { OllamaModelsResponse, PullProgress } from "../types/models";
+import type {
+  OllamaModelsResponse,
+  OllamaModelPullStatusResponse,
+} from "../types/models";
 import { fetchWithAuth } from "./fetchWithAuth";
 
 export async function getOllamaModels(): Promise<OllamaModelsResponse> {
-  const response = await fetchWithAuth(
-    `${import.meta.env.VITE_API_BASE_URL}/models`,
-  );
-
-  console.log(response);
-  return response;
+  return fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/v1/models`);
 }
 
 export async function deleteOneModel(model: string) {
-  return fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/models/${model}`, {
-    method: "DELETE",
-  });
+  return fetchWithAuth(
+    `${import.meta.env.VITE_API_BASE_URL}/api/v1/models/${model}`,
+    {
+      method: "DELETE",
+    },
+  );
 }
 
 // export async function pullOllamaModels(model: string) {
@@ -30,30 +30,22 @@ export async function deleteOneModel(model: string) {
 //   return response;
 // }
 
-export async function pullOllamaModels(
-  modelName: string,
-  onProgress: (data: PullProgress) => void,
-) {
-  await fetchEventSource(`${import.meta.env.VITE_API_BASE_URL}/models/pull`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+export async function pullOllamaModels(modelName: string) {
+  const response = await fetchWithAuth(
+    `${import.meta.env.VITE_API_BASE_URL}/api/v1/models/pull`,
+    {
+      method: "POST",
+      body: JSON.stringify({ model: modelName }),
     },
-    body: JSON.stringify({ model: modelName }),
+  );
+  localStorage.setItem("activeDownloadJob", response.job_id);
+  return response.job_id;
+}
 
-    onmessage(event) {
-      const data: PullProgress = JSON.parse(event.data);
-      // console.log(event);
-      // console.log(data);
-      if (data.type === "error") {
-        throw new Error(data.message);
-      }
-      onProgress(data);
-    },
-
-    onerror(err) {
-      console.error("Stream error:", err);
-      throw err;
-    },
-  });
+export async function getPullStatus(
+  jobId: string,
+): Promise<OllamaModelPullStatusResponse> {
+  return fetchWithAuth(
+    `${import.meta.env.VITE_API_BASE_URL}/api/v1/models/pull/${jobId}`,
+  );
 }

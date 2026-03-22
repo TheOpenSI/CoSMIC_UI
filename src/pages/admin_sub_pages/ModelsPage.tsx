@@ -1,8 +1,18 @@
 import { Button, Input, Modal } from "antd";
 import { useEffect, useState } from "react";
-import { deleteOneModel, pullOllamaModels } from "../../api/models";
-
-import { HardDriveDownload, PackagePlus, Trash2, Cpu } from "lucide-react";
+import {
+  deleteOneModel,
+  getPullStatus,
+  pullOllamaModels,
+} from "../../api/models";
+import { useQuery } from "@tanstack/react-query";
+import {
+  HardDriveDownload,
+  PackagePlus,
+  Trash2,
+  Cpu,
+  // OctagonAlert,
+} from "lucide-react";
 import { message } from "antd";
 import dayjs from "dayjs";
 import { useOllamaModelStore } from "../../stores/OllamaModelsStore";
@@ -18,12 +28,99 @@ export default function ModelsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modelName, setModelName] = useState("");
 
-  const [downloadingModel, setDownloadingModel] = useState<string | null>(null);
+  const [downloadingModel, setDownloadingModel] = useState(
+    localStorage.getItem("activeDownloadModel"),
+  );
   const [downloadStatus, setDownloadStatus] = useState("");
+
+  const [jobId, setJobId] = useState(localStorage.getItem("activeDownloadJob"));
 
   useEffect(() => {
     loadModels();
   }, [loadModels]);
+
+  // polling - requesting getPullStatus if there is a job_id
+  const { data: job, error } = useQuery({
+    queryKey: ["pullStatus", jobId],
+    queryFn: () => getPullStatus(jobId as string),
+    refetchInterval: 2000,
+    enabled: jobId !== null,
+  });
+  console.log("error", error);
+
+  // useEffect(() => {
+  //   if (!error) return;
+  //   setTimeout(() => {
+  //     setJobId(null);
+  //     setDownloadingModel(null);
+  //     setDownloadStatus("");
+  //     localStorage.removeItem("activeDownloadJob");
+  //     localStorage.removeItem("activeDownloadModel");
+  //   }, 0);
+  // }, [error]);
+
+  useEffect(() => {
+    if (!job) return;
+
+    console.log("job status:", job);
+
+    setTimeout(() => {
+      // handle "Job not found" case
+      if (!("status" in job)) {
+        setJobId(null);
+        setDownloadingModel(null);
+        setDownloadStatus("");
+        localStorage.removeItem("activeDownloadJob");
+        localStorage.removeItem("activeDownloadModel");
+        return;
+      }
+
+      if (job.logs.length > 0) {
+        // get the last message
+        setDownloadStatus(job.logs[job.logs.length - 1]);
+      }
+
+      if (job.status === "done") {
+        setJobId(null);
+        localStorage.removeItem("activeDownloadJob");
+        localStorage.removeItem("activeDownloadModel");
+        setDownloadingModel(null);
+        setDownloadStatus("");
+        message.success("Model downloaded!");
+        loadModels();
+      } else if (job.status === "error") {
+        setJobId(null);
+        localStorage.removeItem("activeDownloadJob");
+        localStorage.removeItem("activeDownloadModel");
+        setDownloadingModel(null);
+        setDownloadStatus("");
+        message.error(job.error ?? "Download failed!");
+      }
+    }, 0);
+  }, [job]);
+
+  // get the job_id
+  const handleDownload = async () => {
+    if (!modelName.trim()) return;
+
+    const name = modelName.trim();
+    setIsModalOpen(false);
+    setModelName("");
+
+    try {
+      // show persistency of the downloading card (even refresh,switch tabs still show name)
+      localStorage.setItem("activeDownloadModel", name);
+      const id = await pullOllamaModels(name);
+      setJobId(id);
+      setDownloadingModel(name);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Download failed! Contact Admin";
+      message.error(errorMessage);
+    }
+  };
 
   const handleDelete = async (model: string) => {
     try {
@@ -33,34 +130,6 @@ export default function ModelsPage() {
     } catch (error) {
       console.error(error);
       message.error("Delete failed");
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!modelName.trim()) return;
-
-    const name = modelName.trim();
-    setIsModalOpen(false);
-    setModelName("");
-    setDownloadingModel(name);
-
-    try {
-      await pullOllamaModels(name, (data) => {
-        if (data.type === "log") {
-          setDownloadStatus(data.message);
-        }
-      });
-
-      message.success("Model downloaded!");
-      await loadModels();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Download failed!";
-
-      message.error(errorMessage);
-    } finally {
-      setDownloadingModel(null);
-      setDownloadStatus("");
     }
   };
 
@@ -86,8 +155,9 @@ export default function ModelsPage() {
             <span className="text-[#0079FF]">{totalModels}</span>
           </div>
           <button
-            className="flex items-center justify-center gap-1  text-[#8C8C8C] hover:text-[#0079FF] cursor-pointer"
+            className="flex items-center justify-center gap-1 text-[#8C8C8C] hover:text-[#0079FF] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#8C8C8C]"
             onClick={showModal}
+            disabled={downloadingModel !== null}
           >
             <PackagePlus size={15} /> <span>Add new model</span>
           </button>
@@ -154,15 +224,23 @@ export default function ModelsPage() {
 
       {/* Downloading card */}
       {downloadingModel && (
-        <div className="border border-[#0079FF] rounded-xl p-4 flex items-center justify-between bg-blue-50">
-          <div className="flex items-center gap-2">
-            <Cpu size={16} className="text-[#0079FF] shrink-0 animate-pulse" />
-            <span className="font-semibold text-sm">{downloadingModel}</span>
+        <div className="flex flex-col gap-2">
+          <div className="border border-[#0079FF] rounded-xl p-4 flex items-center justify-between bg-blue-50">
+            <div className="flex items-center gap-2">
+              <Cpu
+                size={16}
+                className="text-[#0079FF] shrink-0 animate-pulse"
+              />
+              <span className="font-semibold text-sm">{downloadingModel}</span>
+            </div>
+            <span className="text-sm text-[#0079FF] font-medium">
+              {downloadStatus}
+            </span>
           </div>
-
-          <span className="text-sm text-[#0079FF] font-medium">
-            {downloadStatus}
-          </span>
+          {/* <span className="text-xs flex items-center gap-2 text-[red]">
+            <OctagonAlert color="red" size={15} /> Please stay on this page
+            until the download completes.
+          </span> */}
         </div>
       )}
 
