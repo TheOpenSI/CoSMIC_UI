@@ -48,16 +48,16 @@ export default function ModelsPage() {
   });
   console.log("error", error);
 
-  useEffect(() => {
-    if (!error) return;
-    setTimeout(() => {
-      setJobId(null);
-      setDownloadingModel(null);
-      setDownloadStatus("");
-      localStorage.removeItem("activeDownloadJob");
-      localStorage.removeItem("activeDownloadModel");
-    }, 0);
-  }, [error]);
+  // useEffect(() => {
+  //   if (!error) return;
+  //   setTimeout(() => {
+  //     setJobId(null);
+  //     setDownloadingModel(null);
+  //     setDownloadStatus("");
+  //     localStorage.removeItem("activeDownloadJob");
+  //     localStorage.removeItem("activeDownloadModel");
+  //   }, 0);
+  // }, [error]);
 
   useEffect(() => {
     if (!job) return;
