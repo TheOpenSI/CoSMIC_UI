@@ -30,7 +30,7 @@ export async function deleteOneModel(model: string) {
 //   return response;
 // }
 
-export async function pullOllamaModels(modelName: string) {
+export async function pullOllamaModel(modelName: string) {
   const response = await fetchWithAuth(
     `${import.meta.env.VITE_API_BASE_URL}/api/v1/models/pull`,
     {
