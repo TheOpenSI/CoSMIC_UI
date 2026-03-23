@@ -27,7 +27,7 @@ export const useOllamaModelStore = create<OllamaModelStore>((set) => ({
   total: cache.total,
   loading: false,
   loadModels: async () => {
-    set({ loading: true });
+    set((state) => ({ loading: state.models.length === 0 ? true : false }));
     try {
       const data = await getOllamaModels();
       localStorage.setItem(
