@@ -3,9 +3,10 @@ import Table from "antd/es/table/Table";
 import { Trash2, UserRoundPlus } from "lucide-react";
 import { deleteOneUser, getAllUsers } from "../../api/users";
 import dayjs from "dayjs";
-import { Button, Input, message, Modal, Select } from "antd";
+import { Button, Input, message, Modal, Select, Spin } from "antd";
 import type { User } from "../../types/users";
 import { useState } from "react";
+import { LoadingOutlined } from "@ant-design/icons";
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -111,17 +112,22 @@ export default function UsersPage() {
         </div>
       </div>
       <div>
-        <Table
-          columns={columns}
-          dataSource={data?.result}
-          rowKey="id"
-          loading={isLoading}
-          pagination={
-            data?.count && data.count > 10
-              ? { pageSize: 10, total: data.count }
-              : false
-          }
-        />
+        {isLoading ? (
+          <div className="flex justify-center py-14">
+            <Spin indicator={<LoadingOutlined spin />} size="large" />
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={data?.result}
+            rowKey="id"
+            pagination={
+              data?.count && data.count > 10
+                ? { pageSize: 10, total: data.count }
+                : false
+            }
+          />
+        )}
       </div>
       <Modal
         title="Create a new user"
