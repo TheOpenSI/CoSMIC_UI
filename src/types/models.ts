@@ -10,10 +10,8 @@ export type OllamaModelsResponse = {
   total: number;
 };
 
-export type OllamaModelPullStatusResponse =
-  | {
-      status: "running" | "done" | "error";
-      logs: string[];
-      error: string | null;
-    }
-  | { error: string };
+export type OllamaModelPullStatusResponse = {
+  status: "running" | "done" | "error";
+  logs: string[];
+  error: string | null;
+};

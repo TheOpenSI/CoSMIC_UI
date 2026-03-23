@@ -22,6 +22,8 @@ const getModelsFromCache = (): OllamaModelsResponse => {
 };
 const cache = getModelsFromCache();
 
+// TO-DO for now its local-storage but later the line might change the solution
+
 export const useOllamaModelStore = create<OllamaModelStore>((set) => ({
   models: cache.models,
   total: cache.total,
