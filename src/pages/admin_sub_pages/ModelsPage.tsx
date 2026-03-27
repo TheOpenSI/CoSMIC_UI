@@ -144,7 +144,7 @@ export default function ModelsPage() {
                 <Cpu size={16} className="text-[#0079FF] shrink-0" />
                 <span
                   title={model.model}
-                  className="font-semibold text-sm truncate cursor-default"
+                  className="font-semibold text-sm truncate cursor-default max-w-sm"
                 >
                   {model.model}
                 </span>
@@ -187,7 +187,7 @@ export default function ModelsPage() {
                   size={16}
                   className="text-[#0079FF] shrink-0 animate-pulse"
                 />
-                <span className="font-semibold text-sm shrink-0 animate-pulse">
+                <span className=" truncate max-w-sm font-semibold text-sm shrink-0 animate-pulse">
                   {modelName}
                 </span>
               </div>
