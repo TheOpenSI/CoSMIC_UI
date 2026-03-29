@@ -134,7 +134,7 @@ export default function ChatPage() {
       {messages.length > 0 && (
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2">
-            <span>Learning Machine Learning</span>
+            <span>{chat?.title}</span>
             <ChevronDown size={16} className="text-gray-500" />
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function ChatPage() {
                 size="small"
               />{" "}
             </div>
-          ) : messages.length === 0 ? (
+          ) : isDraftChat && messages.length === 0 ? (
             <div className="min-h-[70vh] flex items-center justify-center">
               <div className="text-5xl">Welcome, smanile</div>
             </div>

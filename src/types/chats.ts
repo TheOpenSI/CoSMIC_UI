@@ -9,5 +9,5 @@ export type CachedChat = {
   createdAt: string;
   lastMessageCreatedAt: string;
   messages: Message[];
-  // title
+  title: string;
 };

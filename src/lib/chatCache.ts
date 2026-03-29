@@ -29,6 +29,10 @@ export async function saveChat(chatID: string, messages: Message[]) {
     createdAt: existing?.createdAt ?? new Date().toISOString(),
     lastMessageCreatedAt: new Date().toISOString(),
     messages,
+    title:
+      existing?.title ??
+      messages.find((m) => m.role === "user")?.content.slice(0, 50) ??
+      "New chat",
   };
 
   await db.put(STORE, chat, chatID);
