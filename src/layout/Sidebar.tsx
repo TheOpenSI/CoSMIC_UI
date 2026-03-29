@@ -70,7 +70,7 @@ export default function Sidebar() {
                 onClick={(e) => {
                   e.stopPropagation();
                   goNone();
-                  navigate("/");
+                  // navigate("/");
                 }}
                 className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
               >
@@ -81,6 +81,7 @@ export default function Sidebar() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                navigate("/chat/new");
               }}
               className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer "
             >
@@ -92,7 +93,7 @@ export default function Sidebar() {
             onClick={(e) => {
               e.stopPropagation();
               openChatPanel();
-              navigate("/");
+              // navigate("/");
             }}
             className={`p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer  ${isOpen ? "px-2.5 py-1.5 flex-col " : "p-2"}${chatsSelected ? "bg-gray-300" : "hover:bg-gray-300"}`}
           >

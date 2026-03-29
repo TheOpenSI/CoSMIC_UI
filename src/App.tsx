@@ -18,7 +18,8 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
 
         <Route element={<MainLayout />}>
-          <Route path="/" element={<ChatPage />} />
+          <Route path="/chat/new" element={<ChatPage />} />
+          <Route path="/chat/:chatID" element={<ChatPage />} />
           <Route path="/admin" element={<AdminPage />}>
             <Route index element={<Navigate to="users" replace />} />
             <Route path="users" element={<UsersPage />} />
