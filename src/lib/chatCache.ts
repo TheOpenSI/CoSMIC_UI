@@ -37,3 +37,13 @@ export async function saveChat(chatID: string, messages: Message[]) {
 
   await db.put(STORE, chat, chatID);
 }
+
+export async function loadAllChats(): Promise<CachedChat[]> {
+  const db = await getDb();
+  return await db.getAll(STORE);
+}
+
+export async function deleteChat(chatID: string) {
+  const db = await getDb();
+  await db.delete(STORE, chatID);
+}
