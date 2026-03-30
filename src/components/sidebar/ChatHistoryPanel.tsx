@@ -41,7 +41,7 @@ export default function ChatHistoryPanel() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => navigate("/chat/new", { replace: true })}
-          className="flex-1 cursor-pointer bg-[#0079FF] text-white font-bold py-2 text-[15px] rounded-lg"
+          className="flex-1 cursor-pointer bg-[#0079FF] hover:bg-[#005FCC] active:bg-[#004BB5] text-white font-bold py-2 text-[15px] rounded-lg transition-colors duration-150"
         >
           New Chat
         </button>
