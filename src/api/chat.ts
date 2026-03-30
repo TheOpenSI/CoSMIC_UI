@@ -1,4 +1,4 @@
-import type { Message } from "../types/message";
+import type { Message } from "../types/chats";
 import { fetchWithAuth } from "./fetchWithAuth";
 
 export async function sendMessage(
