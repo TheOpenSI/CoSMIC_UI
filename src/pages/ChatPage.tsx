@@ -47,6 +47,12 @@ export default function ChatPage() {
     }
   }, [chat, isDraftChat]);
 
+  useEffect(() => {
+    if (chatID && chatID !== "new") {
+      localStorage.setItem("lastChatId", chatID);
+    }
+  }, [chatID]);
+
   const handleSend = async () => {
     if (!message.trim()) return;
 

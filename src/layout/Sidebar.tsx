@@ -24,11 +24,10 @@ export default function Sidebar() {
 
     if (active === "none" || active === "chats") {
       openChatPanel();
-      navigate("/");
     }
     if (active === "admin") {
       open();
-      navigate("/admin");
+      navigate("/admin", { replace: true });
       return;
     }
   };
@@ -59,7 +58,6 @@ export default function Sidebar() {
                 onClick={(e) => {
                   e.stopPropagation();
                   openChatPanel();
-                  navigate("/");
                 }}
                 className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
               >
@@ -70,7 +68,8 @@ export default function Sidebar() {
                 onClick={(e) => {
                   e.stopPropagation();
                   goNone();
-                  // navigate("/");
+                  const lastChatId = localStorage.getItem("lastChatId");
+                  navigate(lastChatId ? `/chat/${lastChatId}` : "/chat/new");
                 }}
                 className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
               >
@@ -81,7 +80,7 @@ export default function Sidebar() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                navigate("/chat/new");
+                navigate("/chat/new", { replace: true });
               }}
               className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer "
             >
@@ -93,7 +92,7 @@ export default function Sidebar() {
             onClick={(e) => {
               e.stopPropagation();
               openChatPanel();
-              // navigate("/");
+              navigate("/chat/new", { replace: true });
             }}
             className={`p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer  ${isOpen ? "px-2.5 py-1.5 flex-col " : "p-2"}${chatsSelected ? "bg-gray-300" : "hover:bg-gray-300"}`}
           >
@@ -128,7 +127,7 @@ export default function Sidebar() {
             onClick={(e) => {
               e.stopPropagation();
               openAdmin();
-              navigate("/admin");
+              navigate("/admin", { replace: true });
             }}
             className={`
               flex items-center justify-center rounded-xl cursor-pointer
