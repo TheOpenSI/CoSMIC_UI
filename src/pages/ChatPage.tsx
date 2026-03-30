@@ -35,12 +35,17 @@ export default function ChatPage() {
   });
 
   useEffect(() => {
+    if (isDraftChat) {
+      setMessages([]);
+      return;
+    }
+
     if (chat) {
       setMessages(chat.messages);
-    } else if (chatID === "new") {
+    } else {
       setMessages([]);
     }
-  }, [chat, chatID]);
+  }, [chat, isDraftChat]);
 
   const handleSend = async () => {
     if (!message.trim()) return;
