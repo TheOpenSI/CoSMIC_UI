@@ -1,31 +1,48 @@
-import { ArrowLeftToLine, Search } from "lucide-react";
+import { ArrowLeftToLine, Trash2 } from "lucide-react";
 import { useSidebarStore } from "../../stores/SidebarStore";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteChat, loadAllChats } from "../../lib/chatCache";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { useNavigate } from "react-router-dom";
+import { message } from "antd";
+
+dayjs.extend(relativeTime);
 
 export default function ChatHistoryPanel() {
   const collapseChatPanel = useSidebarStore((state) => state.collapseChatPanel);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const chats = [
-    {
-      id: 1,
-      title: "Machine Learning",
-      preview:
-        "it looks like its the best algorithms of all time. It is good to kn...",
-      time: "23m",
-      active: true,
+  const { data: chats = [] } = useQuery({
+    queryKey: ["chats"],
+    queryFn: loadAllChats,
+  });
+
+  const sortedChats = [...chats].sort(
+    (a, b) =>
+      new Date(b.lastMessageCreatedAt).getTime() -
+      new Date(a.lastMessageCreatedAt).getTime(),
+  );
+
+  const { mutate: handleDeleteChat } = useMutation({
+    mutationFn: (chatID: string) => deleteChat(chatID),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chats"] });
     },
-    {
-      id: 2,
-      title: "Machine Learning 20",
-      preview:
-        "it looks like its the best algorithms of all time. It is good to kn....",
-      time: "1h",
-      active: false,
+    onError: (error) => {
+      message.error(error.message);
     },
-  ];
+  });
+
   return (
     <div className="w-full h-full bg-[#F0F5F9] p-3 flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <button className="flex-1 cursor-pointer bg-[#0079FF] text-white font-bold py-2 text-[15px] rounded-lg">
+        <button
+          onClick={() => navigate("/chat/new", { replace: true })}
+          className="flex-1 cursor-pointer bg-[#0079FF] hover:bg-[#005FCC] active:bg-[#004BB5] text-white font-bold py-2 text-[15px] rounded-lg transition-colors duration-150"
+        >
           New Chat
         </button>
         <button
@@ -35,31 +52,49 @@ export default function ChatHistoryPanel() {
           <ArrowLeftToLine size={25} color="#545A6A" />
         </button>
       </div>
-      <div className="flex items-center gap-2 bg-[#E2E8ED] rounded-lg px-2 py-2">
-        <Search color="#8C8C8C" />
-        <input
-          type="text"
-          placeholder="Search Chats"
-          className="bg-transparent outline-none w-full text-sm"
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        {chats.map((chat) => (
-          <div
-            key={chat.id}
-            className="p-2 rounded-lg hover:bg-[#E2E8ED] cursor-pointer"
-          >
-            <div className="flex justify-between items-center ">
-              <span className="font-semibold text-gray-900 text-sm">
-                {chat.title}
-              </span>
-              <span className="text-xs text-gray-900">• {chat.time}</span>
-            </div>
-            <p className="text-xs text-gray-900 truncate mt-0.5">
-              {chat.preview}
-            </p>
+
+      <div className="flex flex-col gap-1 overflow-y-auto flex-1">
+        {sortedChats.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center text-sm text-gray-400 mt-10">
+            No chats yet
           </div>
-        ))}
+        ) : (
+          sortedChats.map((chat) => (
+            <div
+              key={chat.chatID}
+              onClick={() =>
+                navigate(`/chat/${chat.chatID}`, { replace: true })
+              }
+              className="group relative w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#E2E8ED] cursor-pointer transition-colors"
+            >
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="font-medium text-gray-900 text-sm truncate">
+                    {chat.title}
+                  </span>
+                  <p className="text-xs text-gray-400 truncate mt-0.5">
+                    {chat.messages[1]?.content}
+                  </p>
+                </div>
+
+                <div className="shrink-0 mt-0.5">
+                  <span className="text-xs text-gray-400 whitespace-nowrap group-hover:hidden">
+                    {dayjs(chat.lastMessageCreatedAt).fromNow()}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteChat(chat.chatID);
+                    }}
+                    className="cursor-pointer hidden group-hover:flex items-center justify-center p-1 rounded-md hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

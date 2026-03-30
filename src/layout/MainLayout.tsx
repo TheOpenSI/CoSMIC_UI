@@ -1,10 +1,9 @@
 import { Layout } from "antd";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 
 import { useSidebarStore } from "../stores/SidebarStore";
 import Sidebar from "./Sidebar";
 import ChatHistoryPanel from "../components/sidebar/ChatHistoryPanel";
-import { useEffect } from "react";
 
 const { Content } = Layout;
 
@@ -15,18 +14,6 @@ const CHAT_PANEL_WIDTH = 320;
 const MainLayout = () => {
   const isOpen = useSidebarStore((s) => s.isOpen);
   const active = useSidebarStore((s) => s.active);
-  const openAdmin = useSidebarStore((s) => s.openAdmin);
-  const openChatPanel = useSidebarStore((s) => s.openChatPanel);
-
-  const location = useLocation();
-
-  useEffect(() => {
-    if (location.pathname.startsWith("/admin")) {
-      openAdmin();
-    } else {
-      openChatPanel();
-    }
-  }, [location.pathname, openAdmin, openChatPanel]);
 
   const showChatsPanel = active === "chats";
   const railWidth = isOpen ? RAIL_EXPANDED : RAIL_COLLAPSED;

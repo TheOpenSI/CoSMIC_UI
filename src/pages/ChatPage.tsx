@@ -1,14 +1,18 @@
 import { Button, Input, Spin } from "antd";
 import { ChevronDown, CirclePause, Orbit, Paperclip, Send } from "lucide-react";
-import { LoadingOutlined } from "@ant-design/icons";
+
 import { v4 as uuidv4 } from "uuid";
 
 import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
-import { useRef, useState } from "react";
-import type { Message } from "../types/message";
+import { useEffect, useRef, useState } from "react";
+import type { Message } from "../types/chats";
 import { sendMessage } from "../api/chat";
 import ReactMarkdown from "react-markdown";
+import { useNavigate, useParams } from "react-router-dom";
+import { loadChat, saveChat } from "../lib/chatCache";
+import { useQuery } from "@tanstack/react-query";
+import { LoadingOutlined } from "@ant-design/icons";
 
 const { TextArea } = Input;
 
@@ -17,12 +21,49 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const { chatID } = useParams();
+  const navigate = useNavigate();
+  const isDraftChat = !chatID || chatID === "new";
+
+  const { data: chat, isLoading: isChatLoading } = useQuery({
+    queryKey: ["chat", chatID],
+    queryFn: async () => {
+      if (!chatID || chatID === "new") return null;
+      return await loadChat(chatID);
+    },
+    enabled: !!chatID && chatID !== "new",
+  });
+
+  useEffect(() => {
+    if (isDraftChat) {
+      setMessages([]);
+      return;
+    }
+
+    if (chat) {
+      setMessages(chat.messages);
+    } else {
+      setMessages([]);
+    }
+  }, [chat, isDraftChat]);
+
+  useEffect(() => {
+    if (chatID && chatID !== "new") {
+      localStorage.setItem("lastChatId", chatID);
+    }
+  }, [chatID]);
 
   const handleSend = async () => {
     if (!message.trim()) return;
 
     const userText = message.trim();
     abortControllerRef.current = new AbortController();
+
+    let currentChatId = chatID;
+
+    if (isDraftChat) {
+      currentChatId = uuidv4();
+    }
 
     // chatHistory (putting each message into messages[]): current messages + new user message
     // 1. if new message from user, push the new message into the array
@@ -31,9 +72,14 @@ export default function ChatPage() {
       { id: uuidv4(), role: "user", content: userText },
     ];
 
+    await saveChat(currentChatId as string, updatedHistory);
     setMessages(updatedHistory);
     setMessage("");
     setIsLoading(true);
+
+    if (isDraftChat) {
+      navigate(`/chat/${currentChatId}`);
+    }
 
     // 2. then we wait for AI to reply
     try {
@@ -44,29 +90,49 @@ export default function ChatPage() {
       );
 
       // 3. after that, push AI reply into messages
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: uuidv4(),
-          role: "assistant",
-          content: aiReply,
-        },
-      ]);
+      // setMessages((prev) => [
+      //   ...prev,
+      //   {
+      //     id: uuidv4(),
+      //     role: "assistant",
+      //     content: aiReply,
+      //   },
+      // ]);
+
+      const assistantMessage: Message = {
+        id: uuidv4(),
+        role: "assistant",
+        content: aiReply,
+      };
+
+      const finalMessages = [...updatedHistory, assistantMessage];
+      setMessages(finalMessages);
+      await saveChat(currentChatId as string, finalMessages);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       console.error(err);
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: uuidv4(),
-          role: "assistant",
-          content: "Something went wrong.",
-        },
-      ]);
-    }
+      // setMessages((prev) => [
+      //   ...prev,
+      //   {
+      //     id: uuidv4(),
+      //     role: "assistant",
+      //     content: "Something went wrong.",
+      //   },
+      // ]);
+      const errorMessage: Message = {
+        id: uuidv4(),
+        role: "assistant",
+        content: "Something went wrong.",
+      };
 
-    setIsLoading(false);
+      const errorMessages = [...updatedHistory, errorMessage];
+
+      setMessages(errorMessages);
+      await saveChat(currentChatId as string, errorMessages);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleStop = () => {
@@ -79,48 +145,52 @@ export default function ChatPage() {
       {messages.length > 0 && (
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2">
-            <span>Learning Machine Learning</span>
+            <span>{chat?.title}</span>
             <ChevronDown size={16} className="text-gray-500" />
           </div>
         </div>
       )}
       <div className="flex-1  overflow-y-auto ">
         <div className="mx-auto w-full max-w-3xl px-4 py-6 ">
-          {messages.length === 0 && (
-            <div className="min-h-[70vh] flex items-center justify-center ">
+          {isChatLoading ? (
+            <div className="min-h-[70vh] flex items-center justify-center">
+              <Spin
+                indicator={
+                  <LoadingOutlined spin style={{ color: "#DBDCDF" }} />
+                }
+                size="small"
+              />{" "}
+            </div>
+          ) : isDraftChat && messages.length === 0 ? (
+            <div className="min-h-[70vh] flex items-center justify-center">
               <div className="text-5xl">Welcome, smanile</div>
             </div>
-          )}
-          {messages.length > 0 && (
+          ) : (
             <div className="flex gap-6 flex-col ">
-              <div className="flex items-center gap-16">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-gray-400 text-sm">
-                  {dayjs().format("D MMM YYYY")}
-                </span>
-                <div className="flex-1 h-px bg-gray-200" />
-              </div>
+              <span className="text-gray-400 text-sm flex justify-center">
+                {dayjs().format("D MMM YYYY")}
+              </span>
+
               <div>
                 {messages.map((msg) => {
                   const isUser = msg.role === "user";
                   return (
                     <div key={msg.id} className="flex gap-2 mb-6">
-                      {isUser && (
-                        <div className=" flex gap-3 items-start">
+                      {isUser ? (
+                        <div className="flex gap-3 items-start">
                           <div className="bg-[#E6E7EB] rounded-full p-2 mt-1">
                             <BsPersonFill color="#6B7281" size={20} />
                           </div>
-                          <div className="mt-1 bg-[#0079FF] text-white px-4 py-2 rounded-2xl text-sm wrap-break-word max-w-172">
+                          <div className="mt-1 bg-[#0079FF] text-white px-4 py-2 rounded-2xl text-sm max-w-172">
                             {msg.content}
                           </div>
                         </div>
-                      )}
-                      {!isUser && (
-                        <div className=" flex gap-3 items-start">
+                      ) : (
+                        <div className="flex gap-3 items-start">
                           <div className="bg-black rounded-full p-1.5 mt-1 text-amber-50">
                             <Orbit size={22} />
                           </div>
-                          <div className="mt-1 text-gray-800 px-1 py-2 text-sm wrap-break-word max-w-172 prose prose-sm">
+                          <div className="mt-1 text-gray-800 px-1 py-2 text-sm max-w-172 prose prose-sm">
                             <ReactMarkdown>{msg.content}</ReactMarkdown>
                           </div>
                         </div>
@@ -128,17 +198,16 @@ export default function ChatPage() {
                     </div>
                   );
                 })}
+
                 {isLoading && (
                   <div className="flex gap-3 items-start mb-6">
-                    <div className="mt-2 flex items-center gap-2 text-gray-400 text-sm">
-                      <Spin
-                        indicator={
-                          <LoadingOutlined spin style={{ color: "#DBDCDF" }} />
-                        }
-                        size="small"
-                      />
-                      <span>Cosmic is thinking...</span>
-                    </div>
+                    <Spin
+                      indicator={
+                        <LoadingOutlined spin style={{ color: "#DBDCDF" }} />
+                      }
+                      size="small"
+                    />
+                    <span>Cosmic is thinking...</span>
                   </div>
                 )}
               </div>
