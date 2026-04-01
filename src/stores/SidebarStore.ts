@@ -22,7 +22,8 @@ export const useSidebarStore = create<SidebarStore>()(
       open: () => set({ isOpen: true }),
 
       active: "none",
-      openAdmin: () => set({ active: "admin" }),
+      // openAdmin: () => set({ active: "admin" }),
+      openAdmin: () => set({ active: "admin", isOpen: true }),
       openChatPanel: () => set({ active: "chats", isOpen: true }),
 
       collapseChatPanel: () => set({ active: "none", isOpen: false }),

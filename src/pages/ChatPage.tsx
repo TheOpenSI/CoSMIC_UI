@@ -1,5 +1,5 @@
 import { Button, Input, Spin } from "antd";
-import { ChevronDown, CirclePause, Orbit, Paperclip, Send } from "lucide-react";
+import { CirclePause, Orbit, Paperclip, Send } from "lucide-react";
 
 import { v4 as uuidv4 } from "uuid";
 
@@ -46,12 +46,6 @@ export default function ChatPage() {
       setMessages([]);
     }
   }, [chat, isDraftChat]);
-
-  useEffect(() => {
-    if (chatID && chatID !== "new") {
-      localStorage.setItem("lastChatId", chatID);
-    }
-  }, [chatID]);
 
   const handleSend = async () => {
     if (!message.trim()) return;
@@ -146,7 +140,7 @@ export default function ChatPage() {
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2">
             <span>{chat?.title}</span>
-            <ChevronDown size={16} className="text-gray-500" />
+            {/* <ChevronDown size={16} className="text-gray-500" /> */}
           </div>
         </div>
       )}
@@ -168,7 +162,8 @@ export default function ChatPage() {
           ) : (
             <div className="flex gap-6 flex-col ">
               <span className="text-gray-400 text-sm flex justify-center">
-                {dayjs().format("D MMM YYYY")}
+                {/* {dayjs().format("D MMM YYYY")} */}
+                {dayjs(chat?.createdAt).format("D MMM YYYY")}
               </span>
 
               <div>

@@ -1,7 +1,7 @@
 import {
   ArrowRightToLine,
   CircleFadingPlus,
-  Undo2,
+  // Undo2,
   UserRound,
 } from "lucide-react";
 import { useSidebarStore } from "../stores/SidebarStore";
@@ -14,7 +14,7 @@ export default function Sidebar() {
   const openChatPanel = useSidebarStore((state) => state.openChatPanel);
   const openAdmin = useSidebarStore((state) => state.openAdmin);
   const active = useSidebarStore((s) => s.active);
-  const goNone = useSidebarStore((s) => s.goNone);
+  // const goNone = useSidebarStore((s) => s.goNone);
 
   const chatsSelected = active === "chats";
   const adminSelected = active === "admin";
@@ -52,30 +52,31 @@ export default function Sidebar() {
     `}
       >
         <div className="w-full flex flex-col items-center gap-1 ">
-          {!isOpen &&
-            (active === "none" ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openChatPanel();
-                }}
-                className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
-              >
-                <ArrowRightToLine color="#545A6A" size={18} />
-              </button>
-            ) : (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  goNone();
-                  const lastChatId = localStorage.getItem("lastChatId");
-                  navigate(lastChatId ? `/chat/${lastChatId}` : "/chat/new");
-                }}
-                className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
-              >
-                <Undo2 color="#545A6A" size={18} />
-              </button>
-            ))}
+          {!isOpen && (
+            // (active === "none" ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                openChatPanel();
+              }}
+              className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
+            >
+              <ArrowRightToLine color="#545A6A" size={18} />
+            </button>
+          )}
+          {/* // : (
+            //   <button 
+            //     onClick={(e) => {
+            //       e.stopPropagation();
+            //       goNone();
+            //       const lastChatId = localStorage.getItem("lastChatId");
+            //       navigate(lastChatId ? `/chat/${lastChatId}` : "/chat/new");
+            //     }}
+            //     className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
+            //   >
+            //     <Undo2 color="#545A6A" size={18} />
+            //   </button>
+            // ))}*/}
           {!isOpen && (
             <button
               onClick={(e) => {

@@ -10,7 +10,7 @@ import { Button, Input, message, Modal, Spin } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { LoadingOutlined } from "@ant-design/icons";
-import { useDownloadStore } from "../../stores/downloadStore";
+import { useDownloadStore } from "../../stores/DownloadStore";
 
 export default function ModelsPage() {
   const queryClient = useQueryClient();

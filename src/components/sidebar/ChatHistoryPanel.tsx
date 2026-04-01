@@ -30,6 +30,7 @@ export default function ChatHistoryPanel() {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chats"] });
+      navigate("/chat/new", { replace: true });
     },
     onError: (error) => {
       message.error(error.message);
