@@ -30,7 +30,7 @@ services:
     networks:
       - cosmic_net
 
-
 networks:
   cosmic_net:
+    name: cosmic_net
     driver: bridge
