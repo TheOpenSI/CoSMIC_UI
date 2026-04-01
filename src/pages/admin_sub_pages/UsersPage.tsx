@@ -68,7 +68,7 @@ export default function UsersPage() {
     },
     {
       title: "Role",
-      dataIndex: "role",
+      dataIndex: ["role", "name"],
     },
     {
       title: "Created at",
