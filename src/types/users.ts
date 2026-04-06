@@ -1,9 +1,4 @@
-export type Role = {
-  id: string;
-  name: string;
-  desc: string;
-  create_on: string;
-};
+import type { Role } from "./roles";
 
 export type User = {
   id: string;
