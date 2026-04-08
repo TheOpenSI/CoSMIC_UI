@@ -3,15 +3,18 @@ import { useOllamaModelStore } from "../../stores/OllamaModelsStore";
 import { useEffect, useState } from "react";
 import type { ConfigFormValues, ConfigPayload } from "../../types/configs";
 import { updateConfig } from "../../api/configs";
+import { useServicesStore } from "../../stores/ServicesStore";
 
 export default function ConfigsPage() {
   const [form] = Form.useForm();
   const { models, loadModels } = useOllamaModelStore();
+  const { services, loadServices } = useServicesStore();
   const [sameAsAbove, setSameAsAbove] = useState(false);
 
   useEffect(() => {
     loadModels();
-  }, [loadModels]);
+    loadServices();
+  }, [loadModels, loadServices]);
 
   const onSave = async (values: ConfigFormValues) => {
     const payload: ConfigPayload = {
@@ -133,11 +136,10 @@ export default function ConfigsPage() {
               mode="multiple"
               allowClear
               placeholder="Please select services"
-              options={[
-                { value: "chess", label: "Chess" },
-                { value: "RAG", label: "RAG" },
-                { value: "vector_database", label: "Vector Database" },
-              ]}
+              options={services.map((service) => ({
+                value: service.name,
+                label: service.name,
+              }))}
             />
           </Form.Item>
         </div>
