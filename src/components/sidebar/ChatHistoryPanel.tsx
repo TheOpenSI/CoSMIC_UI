@@ -4,8 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteChat, loadAllChats } from "../../lib/chatCache";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { message } from "antd";
+import { v4 as uuidv4 } from "uuid";
 
 dayjs.extend(relativeTime);
 
@@ -13,6 +14,7 @@ export default function ChatHistoryPanel() {
   const collapseChatPanel = useSidebarStore((state) => state.collapseChatPanel);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { chatID } = useParams();
 
   const { data: chats = [] } = useQuery({
     queryKey: ["chats"],
@@ -41,7 +43,14 @@ export default function ChatHistoryPanel() {
     <div className="w-full h-full bg-[#F0F5F9] p-3 flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <button
-          onClick={() => navigate("/chat/new", { replace: true })}
+          onClick={(e) => {
+            e.stopPropagation();
+
+            const lastChatId = localStorage.getItem("lastChatId");
+            const targetChatId = chatID || lastChatId || uuidv4();
+
+            navigate(`/chat/${targetChatId}`, { replace: true });
+          }}
           className="flex-1 cursor-pointer bg-[#0079FF] hover:bg-[#005FCC] active:bg-[#004BB5] text-white font-bold py-2 text-[15px] rounded-lg transition-colors duration-150"
         >
           New Chat

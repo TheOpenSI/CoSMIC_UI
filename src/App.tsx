@@ -9,6 +9,7 @@ import UsersPage from "./pages/admin_sub_pages/UsersPage";
 import ConfigsPage from "./pages/admin_sub_pages/ConfigsPage";
 import ModelsPage from "./pages/admin_sub_pages/ModelsPage";
 import AnalyticsPage from "./pages/admin_sub_pages/AnalyticsPage";
+import { v4 as uuidv4 } from "uuid";
 
 export default function App() {
   return (
@@ -18,8 +19,10 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
 
         <Route element={<MainLayout />}>
-          <Route index element={<Navigate to="/chat/new" replace />} />
-          <Route path="/chat/new" element={<ChatPage />} />
+          <Route
+            index
+            element={<Navigate to={`/chat/${uuidv4()}`} replace />}
+          />
           <Route path="/chat/:chatID" element={<ChatPage />} />
           <Route path="/admin" element={<AdminPage />}>
             <Route index element={<Navigate to="users" replace />} />

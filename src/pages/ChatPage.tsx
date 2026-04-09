@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Message } from "../types/chats";
 import { sendMessage } from "../api/chat";
 import ReactMarkdown from "react-markdown";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { loadChat, saveChat } from "../lib/chatCache";
 import { useQuery } from "@tanstack/react-query";
 import { LoadingOutlined } from "@ant-design/icons";
@@ -22,42 +22,35 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { chatID } = useParams();
-  const navigate = useNavigate();
-  const isDraftChat = !chatID || chatID === "new";
+
+  useEffect(() => {
+    if (chatID) {
+      localStorage.setItem("lastChatId", chatID);
+    }
+  }, [chatID]);
 
   const { data: chat, isLoading: isChatLoading } = useQuery({
     queryKey: ["chat", chatID],
     queryFn: async () => {
-      if (!chatID || chatID === "new") return null;
+      if (!chatID) return null;
       return await loadChat(chatID);
     },
-    enabled: !!chatID && chatID !== "new",
+    enabled: !!chatID,
   });
 
   useEffect(() => {
-    if (isDraftChat) {
-      setMessages([]);
-      return;
-    }
-
     if (chat) {
       setMessages(chat.messages);
     } else {
       setMessages([]);
     }
-  }, [chat, isDraftChat]);
+  }, [chat]);
 
   const handleSend = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || !chatID) return;
 
     const userText = message.trim();
     abortControllerRef.current = new AbortController();
-
-    let currentChatId = chatID;
-
-    if (isDraftChat) {
-      currentChatId = uuidv4();
-    }
 
     // chatHistory (putting each message into messages[]): current messages + new user message
     // 1. if new message from user, push the new message into the array
@@ -66,14 +59,10 @@ export default function ChatPage() {
       { id: uuidv4(), role: "user", content: userText },
     ];
 
-    await saveChat(currentChatId as string, updatedHistory);
+    await saveChat(chatID, updatedHistory);
     setMessages(updatedHistory);
     setMessage("");
     setIsLoading(true);
-
-    if (isDraftChat) {
-      navigate(`/chat/${currentChatId}`);
-    }
 
     // 2. then we wait for AI to reply
     try {
@@ -101,7 +90,7 @@ export default function ChatPage() {
 
       const finalMessages = [...updatedHistory, assistantMessage];
       setMessages(finalMessages);
-      await saveChat(currentChatId as string, finalMessages);
+      await saveChat(chatID, finalMessages);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       console.error(err);
@@ -123,7 +112,7 @@ export default function ChatPage() {
       const errorMessages = [...updatedHistory, errorMessage];
 
       setMessages(errorMessages);
-      await saveChat(currentChatId as string, errorMessages);
+      await saveChat(chatID, errorMessages);
     } finally {
       setIsLoading(false);
     }
@@ -155,7 +144,7 @@ export default function ChatPage() {
                 size="small"
               />{" "}
             </div>
-          ) : isDraftChat && messages.length === 0 ? (
+          ) : messages.length === 0 ? (
             <div className="min-h-[70vh] flex items-center justify-center">
               <div className="text-5xl">Welcome, smanile</div>
             </div>
