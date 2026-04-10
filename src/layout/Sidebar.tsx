@@ -1,11 +1,13 @@
+import { v4 as uuidv4 } from "uuid";
 import {
   ArrowRightToLine,
   CircleFadingPlus,
-  Undo2,
+  // Undo2,
   UserRound,
 } from "lucide-react";
 import { useSidebarStore } from "../stores/SidebarStore";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { loadChat } from "../lib/chatCache";
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -14,10 +16,12 @@ export default function Sidebar() {
   const openChatPanel = useSidebarStore((state) => state.openChatPanel);
   const openAdmin = useSidebarStore((state) => state.openAdmin);
   const active = useSidebarStore((s) => s.active);
-  const goNone = useSidebarStore((s) => s.goNone);
+  // const goNone = useSidebarStore((s) => s.goNone);
 
   const chatsSelected = active === "chats";
   const adminSelected = active === "admin";
+
+  const { chatID } = useParams();
 
   const handleRailClick = () => {
     if (isOpen) return;
@@ -52,35 +56,46 @@ export default function Sidebar() {
     `}
       >
         <div className="w-full flex flex-col items-center gap-1 ">
-          {!isOpen &&
-            (active === "none" ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openChatPanel();
-                }}
-                className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
-              >
-                <ArrowRightToLine color="#545A6A" size={18} />
-              </button>
-            ) : (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  goNone();
-                  const lastChatId = localStorage.getItem("lastChatId");
-                  navigate(lastChatId ? `/chat/${lastChatId}` : "/chat/new");
-                }}
-                className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
-              >
-                <Undo2 color="#545A6A" size={18} />
-              </button>
-            ))}
           {!isOpen && (
+            // (active === "none" ? (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                navigate("/chat/new", { replace: true });
+                openChatPanel();
+              }}
+              className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
+            >
+              <ArrowRightToLine color="#545A6A" size={18} />
+            </button>
+          )}
+          {/* // : (
+            //   <button 
+            //     onClick={(e) => {
+            //       e.stopPropagation();
+            //       goNone();
+            //       const lastChatId = localStorage.getItem("lastChatId");
+            //       navigate(lastChatId ? `/chat/${lastChatId}` : "/chat/new");
+            //     }}
+            //     className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer mb-4"
+            //   >
+            //     <Undo2 color="#545A6A" size={18} />
+            //   </button>
+            // ))}*/}
+          {!isOpen && (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+
+                if (chatID) {
+                  const existingChat = await loadChat(chatID);
+
+                  if (!existingChat || existingChat.messages.length === 0) {
+                    navigate(`/chat/${chatID}`, { replace: true });
+                    return;
+                  }
+                }
+
+                navigate(`/chat/${uuidv4()}`, { replace: true });
               }}
               className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer "
             >
@@ -92,7 +107,11 @@ export default function Sidebar() {
             onClick={(e) => {
               e.stopPropagation();
               openChatPanel();
-              navigate("/chat/new", { replace: true });
+
+              const lastChatId = localStorage.getItem("lastChatId");
+              const targetChatId = chatID || lastChatId || uuidv4();
+
+              navigate(`/chat/${targetChatId}`, { replace: true });
             }}
             className={`p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer  ${isOpen ? "px-2.5 py-1.5 flex-col " : "p-2"}${chatsSelected ? "bg-gray-300" : "hover:bg-gray-300"}`}
           >
