@@ -3,7 +3,7 @@ set -euo pipefail
 
 IMAGE_NAME="${IMAGE_NAME:-cosmic-ui:latest}"
 CONTAINER_NAME="${CONTAINER_NAME:-cosmic-ui}"
-NETWORK_NAME="${NETWORK_NAME:-cosmic_cosmic_net}"
+NETWORK_NAME="${NETWORK_NAME:-cosmic_net}"
 
 # Backend is accessed from the BROWSER at localhost:3000
 BACKEND_HOST="${BACKEND_HOST:-localhost}"
