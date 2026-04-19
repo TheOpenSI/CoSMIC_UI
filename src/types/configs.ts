@@ -3,7 +3,8 @@ export type ConfigFormValues = {
   model: string;
   quantized: boolean;
   seed: number;
-  services: string[];
+  // services: string[];
+  services_enable: number[];
   qa_llm: string;
   qa_model: string;
   qa_quantized: boolean;
@@ -16,6 +17,7 @@ export type ConfigPayload = {
   is_quantized: boolean;
   seed: number;
   service: number;
+  services_enable: number[];
   doc_directory: string;
   document_path: string;
   sameasabove: boolean;

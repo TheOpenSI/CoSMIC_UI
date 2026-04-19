@@ -19,6 +19,7 @@ import type {
 import { getConfigSettings, updateConfig } from "../../api/configs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingOutlined } from "@ant-design/icons";
+import { useServicesStore } from "../../stores/ServicesStore";
 
 export default function ConfigsPage() {
   const [form] = Form.useForm();
@@ -26,10 +27,12 @@ export default function ConfigsPage() {
   const [sameAsAbove, setSameAsAbove] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { services_enable, loadServices } = useServicesStore();
 
   useEffect(() => {
     loadModels();
-  }, [loadModels]);
+    loadServices();
+  }, [loadModels, loadServices]);
 
   const {
     data: config,
@@ -71,6 +74,7 @@ export default function ConfigsPage() {
       is_quantized: values.quantized ?? false,
       seed: values.seed ?? 0,
       service: -1,
+      services_enable: values.services_enable,
       doc_directory: "",
       document_path: "",
       sameasabove: sameAsAbove,
@@ -284,16 +288,15 @@ export default function ConfigsPage() {
               />
             </Form.Item>
 
-            <Form.Item name="services" label="Choose the service(s)">
+            <Form.Item name="services_enable" label="Choose the service(s)">
               <Select
                 mode="multiple"
                 allowClear
                 placeholder="Please select services"
-                options={[
-                  { value: "chess", label: "Chess" },
-                  { value: "RAG", label: "RAG" },
-                  { value: "vector_database", label: "Vector Database" },
-                ]}
+                options={services_enable.map((service) => ({
+                  value: service.id,
+                  label: service.name,
+                }))}
               />
             </Form.Item>
           </div>
