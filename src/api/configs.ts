@@ -1,4 +1,4 @@
-import type { ConfigPayload, ConfigResponse } from "../types/configs";
+import type { ConfigPayload } from "../types/configs";
 import { fetchWithAuth } from "./fetchWithAuth";
 
 export async function updateConfig(payload: ConfigPayload) {
@@ -12,8 +12,4 @@ export async function updateConfig(payload: ConfigPayload) {
 
   console.log(response);
   return response;
-}
-
-export async function getConfigSettings(): Promise<ConfigResponse> {
-  return fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/config`);
 }

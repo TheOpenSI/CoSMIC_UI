@@ -35,26 +35,3 @@ export type ConfigPayload = {
     api_key: string;
   };
 };
-
-export type ConfigResponse = {
-  llm_name: string;
-  is_quantized: boolean;
-  seed: number;
-  service: number[];
-  doc_directory: string;
-  document_path: string[];
-  sameasabove: boolean;
-  query_analyser: {
-    llm_name: string;
-    is_quantized: boolean;
-  };
-  rag: {
-    retrieve_score_threshold: number;
-    topk: number;
-    vector_db_path: string;
-  };
-  chess: {
-    stockfish_path: string;
-  };
-  OPENAI_API_KEY: string;
-};
