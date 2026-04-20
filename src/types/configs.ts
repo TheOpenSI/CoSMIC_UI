@@ -11,6 +11,7 @@ export type ConfigFormValues = {
   stockfish_path?: string;
   topk: number;
   retrieve_score_threshold: number;
+  sameasabove: boolean;
 };
 export type ConfigPayload = {
   llm_name: string;
@@ -42,7 +43,8 @@ export type ConfigResponse = {
   llm_name: string;
   is_quantized: boolean;
   seed: number;
-  service: number[];
+  // service: number[];
+  services_enable: number[];
   doc_directory: string;
   document_path: string[];
   sameasabove: boolean;
