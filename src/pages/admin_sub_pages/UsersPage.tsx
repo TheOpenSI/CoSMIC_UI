@@ -1,12 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Table from "antd/es/table/Table";
 import { Trash2, UserRoundPlus } from "lucide-react";
-import { deleteOneUser, getAllUsers } from "../../api/users";
+import { deleteOneUser, getAllUsers, updateUserRole } from "../../api/users";
 import dayjs from "dayjs";
-import { Button, Input, message, Modal, Select, Spin } from "antd";
+import {
+  Button,
+  Dropdown,
+  Input,
+  message,
+  Modal,
+  Select,
+  Spin,
+  Tag,
+} from "antd";
 import type { User } from "../../types/users";
 import { useState } from "react";
 import { LoadingOutlined } from "@ant-design/icons";
+import { getAllRoles } from "../../api/roles";
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -33,6 +43,11 @@ export default function UsersPage() {
     queryFn: getAllUsers,
   });
 
+  const { data: roles } = useQuery({
+    queryKey: ["roles"],
+    queryFn: getAllRoles,
+  });
+
   const { mutate: handleDelete } = useMutation({
     mutationFn: (id: string) => deleteOneUser(id),
     onSuccess: () => {
@@ -41,6 +56,18 @@ export default function UsersPage() {
     },
     onError: () => {
       message.error("Delete failed");
+    },
+  });
+
+  const { mutate: handleRoleUpdate } = useMutation({
+    mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) =>
+      updateUserRole(userId, roleId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      message.success("Role updated!");
+    },
+    onError: () => {
+      message.error("Role update failed");
     },
   });
 
@@ -68,7 +95,28 @@ export default function UsersPage() {
     },
     {
       title: "Role",
-      dataIndex: "role",
+      dataIndex: ["role", "name"],
+      render: (_: string, record: User) => {
+        const isAdmin = record.role.name === "Admin";
+
+        const items = roles?.result?.map((role) => ({
+          key: role.id,
+          label: role.name,
+          onClick: () =>
+            handleRoleUpdate({
+              userId: record.id,
+              roleId: role.id,
+            }),
+        }));
+
+        return (
+          <Dropdown menu={{ items }} trigger={["click"]}>
+            <Tag color={isAdmin ? "green" : "blue"} className="cursor-pointer">
+              {record.role.name}
+            </Tag>
+          </Dropdown>
+        );
+      },
     },
     {
       title: "Created at",
