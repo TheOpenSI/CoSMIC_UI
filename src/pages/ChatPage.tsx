@@ -104,16 +104,19 @@ export default function ChatPage() {
       if (!chatID && data.chat_id) {
         setMessages(data.chat_id, finalMessages);
         setOptimisticTitle(data.chat_id, "");
+        setFileList([]); //set list empty array for now because dont know where it will go
         navigate(`/chat/${data.chat_id}`, { replace: true });
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         setOptimisticTitle(chatKey, "");
+        setFileList([]); //set list empty array for now because dont know where it will go
         setLoading(chatKey, false);
         return;
       }
       console.error(err);
       setOptimisticTitle(chatKey, "");
+      setFileList([]); //set list empty array for now because dont know where it will go
 
       const errorMessage: Message = {
         id: uuidv4(),
@@ -210,28 +213,32 @@ export default function ChatPage() {
       <div className="mx-auto w-full max-w-3xl px-4 py-4">
         <div className="bg-[#F0F5F9] rounded-2xl p-4 w-full max-w-3xl">
           {fileList.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto mt-1.5">
-              {fileList.map((file) => (
-                <div
-                  key={file.uid}
-                  className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shrink-0 max-w-40"
-                >
-                  <Paperclip size={12} className="text-gray-400 shrink-0" />
-                  <span className="text-xs text-gray-600 truncate">
-                    {file.name}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setFileList((prev) =>
-                        prev.filter((f) => f.uid !== file.uid),
-                      )
-                    }
-                    className="shrink-0 text-gray-300 hover:text-red-400 transition-colors ml-0.5"
+            <div className="overflow-x-auto overflow-y-hidden mt-1.5 pb-2">
+              <div className="flex gap-2 min-w-max">
+                {fileList.map((file) => (
+                  <div
+                    key={file.uid}
+                    className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shrink-0 max-w-40"
                   >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              ))}
+                    <Paperclip size={12} className="text-gray-400 shrink-0" />
+
+                    <span className="text-xs text-gray-600 truncate">
+                      {file.name}
+                    </span>
+
+                    <button
+                      onClick={() =>
+                        setFileList((prev) =>
+                          prev.filter((f) => f.uid !== file.uid),
+                        )
+                      }
+                      className="shrink-0 text-gray-300 hover:text-red-400 transition-colors ml-0.5"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
