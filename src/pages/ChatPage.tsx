@@ -1,5 +1,5 @@
-import { Button, Input, Spin } from "antd";
-import { CirclePause, Orbit, Paperclip, Send } from "lucide-react";
+import { Button, Input, Spin, Upload, type UploadFile } from "antd";
+import { CirclePause, Orbit, Paperclip, Send, Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
@@ -36,6 +36,8 @@ export default function ChatPage() {
   const messages = messagesByChat[chatKey] ?? [];
   const isLoading = loadingByChat[chatKey] ?? false;
   const optimisticTitle = optimisticTitleByChat[chatKey] ?? "";
+
+  const [fileList, setFileList] = useState<UploadFile[]>([]); //state to store files upload
 
   const { data: currentChat, isLoading: isChatLoading } = useQuery({
     queryKey: ["chat", chatID],
@@ -207,6 +209,32 @@ export default function ChatPage() {
 
       <div className="mx-auto w-full max-w-3xl px-4 py-4">
         <div className="bg-[#F0F5F9] rounded-2xl p-4 w-full max-w-3xl">
+          {fileList.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto mt-1.5">
+              {fileList.map((file) => (
+                <div
+                  key={file.uid}
+                  className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shrink-0 max-w-40"
+                >
+                  <Paperclip size={12} className="text-gray-400 shrink-0" />
+                  <span className="text-xs text-gray-600 truncate">
+                    {file.name}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setFileList((prev) =>
+                        prev.filter((f) => f.uid !== file.uid),
+                      )
+                    }
+                    className="shrink-0 text-gray-300 hover:text-red-400 transition-colors ml-0.5"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <TextArea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -222,9 +250,17 @@ export default function ChatPage() {
             }}
           />
           <div className="relative flex items-center mt-5">
-            <button className="cursor-pointer">
-              <Paperclip size={18} />
-            </button>
+            <Upload
+              multiple
+              fileList={fileList}
+              beforeUpload={(file) => {
+                setFileList((prev) => [...prev, file]);
+                return false; // prevent auto upload
+              }}
+              showUploadList={false}
+            >
+              <Paperclip size={18} className="cursor-pointer" />
+            </Upload>
             <div className="absolute -right-2">
               {isLoading ? (
                 <Button
