@@ -1,3 +1,4 @@
+import { useUserStore } from "../stores/UserStore";
 import type {
   Chat,
   ChatSessionsResponse,
@@ -13,6 +14,8 @@ export async function sendMessage(
   title: string,
   signal?: AbortSignal,
 ) {
+  const selectedUser = useUserStore.getState().selectedUser; //outside of tsx use getState
+
   const res = await fetchWithAuth(
     `${import.meta.env.VITE_API_BASE_URL}/api/v1/cosmic`,
     {
@@ -24,9 +27,9 @@ export async function sendMessage(
         user_message: message,
         body: {
           user: {
-            id: "019dcd10-fb71-72d4-8322-a1965859b490",
-            role: "admin",
-            email: "smanileee@gmail.com",
+            id: selectedUser?.id,
+            role: selectedUser?.role.name,
+            email: selectedUser?.email,
           },
           messages: chatHistory,
         },

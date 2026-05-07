@@ -15,6 +15,8 @@ import UsersPage from "./pages/admin_sub_pages/UsersPage";
 import ConfigsPage from "./pages/admin_sub_pages/ConfigsPage";
 import ModelsPage from "./pages/admin_sub_pages/ModelsPage";
 import AnalyticsPage from "./pages/admin_sub_pages/AnalyticsPage";
+import { useUserStore } from "./stores/UserStore";
+import { useEffect } from "react";
 
 function ChatPageWrapper() {
   const { chatID } = useParams();
@@ -22,6 +24,12 @@ function ChatPageWrapper() {
 }
 
 export default function App() {
+  const { fetchUsers } = useUserStore();
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
   return (
     <BrowserRouter>
       <Routes>

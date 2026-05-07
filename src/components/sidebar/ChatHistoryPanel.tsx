@@ -7,6 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { message } from "antd";
 
 import { deleteChatSession, getAllChatSessions } from "../../api/chat";
+import { useUserStore } from "../../stores/UserStore";
 
 dayjs.extend(relativeTime);
 
@@ -16,6 +17,7 @@ export default function ChatHistoryPanel() {
   const { chatID } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { selectedUser } = useUserStore();
 
   const { data: allChats } = useQuery({
     queryKey: ["allUsersAndChatSessions"],
@@ -23,7 +25,7 @@ export default function ChatHistoryPanel() {
   });
 
   const sortedChats = (allChats?.result ?? [])
-    .filter((chat) => chat.user_id === "019dcd10-fb71-72d4-8322-a1965859b490") //TODO change this to dynamic when auth is applied
+    .filter((chat) => chat.user_id === selectedUser?.id)
     .sort((a, b) => dayjs(b.create_on).unix() - dayjs(a.create_on).unix());
 
   console.log(sortedChats);

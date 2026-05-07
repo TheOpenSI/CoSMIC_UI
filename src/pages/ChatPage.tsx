@@ -12,6 +12,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingOutlined } from "@ant-design/icons";
 import { mapToMessages } from "../lib/mapToMessages";
 import { useChatStore } from "../stores/ChatStore";
+import { useUserStore } from "../stores/UserStore";
 
 const { TextArea } = Input;
 
@@ -23,6 +24,11 @@ export default function ChatPage() {
   const queryClient = useQueryClient();
 
   const chatKey = chatID ?? "new";
+
+  const { users, selectedUser } = useUserStore();
+
+  console.log("users:", users);
+  console.log("selectedUser:", selectedUser);
 
   const {
     messagesByChat,
@@ -152,7 +158,7 @@ export default function ChatPage() {
             </div>
           ) : messages.length === 0 ? (
             <div className="min-h-[70vh] flex items-center justify-center">
-              <div className="text-5xl">Welcome to CoSMIC</div>
+              <div className="text-5xl">Welcome {selectedUser?.name}</div>
             </div>
           ) : (
             <div className="flex gap-6 flex-col">
