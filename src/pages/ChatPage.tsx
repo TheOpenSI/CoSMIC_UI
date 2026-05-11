@@ -1,126 +1,139 @@
 import { Button, Input, Spin } from "antd";
 import { CirclePause, Orbit, Paperclip, Send } from "lucide-react";
-
 import { v4 as uuidv4 } from "uuid";
-
 import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import type { Message } from "../types/chats";
-import { sendMessage } from "../api/chat";
+import { getOneChatSession, sendMessage } from "../api/chat";
 import ReactMarkdown from "react-markdown";
-import { useParams } from "react-router-dom";
-import { loadChat, saveChat } from "../lib/chatCache";
-import { useQuery } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingOutlined } from "@ant-design/icons";
+import { mapToMessages } from "../lib/mapToMessages";
+import { useChatStore } from "../stores/ChatStore";
+import { useUserStore } from "../stores/UserStore";
 
 const { TextArea } = Input;
 
 export default function ChatPage() {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { chatID } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (chatID) {
-      localStorage.setItem("lastChatId", chatID);
-    }
-  }, [chatID]);
+  const chatKey = chatID ?? "new";
 
-  const { data: chat, isLoading: isChatLoading } = useQuery({
+  const { users, selectedUser } = useUserStore();
+
+  console.log("users:", users);
+  console.log("selectedUser:", selectedUser);
+
+  const {
+    messagesByChat,
+    loadingByChat,
+    optimisticTitleByChat,
+    setMessages,
+    setLoading,
+    setOptimisticTitle,
+  } = useChatStore();
+
+  const messages = messagesByChat[chatKey] ?? [];
+  const isLoading = loadingByChat[chatKey] ?? false;
+  const optimisticTitle = optimisticTitleByChat[chatKey] ?? "";
+
+  const { data: currentChat, isLoading: isChatLoading } = useQuery({
     queryKey: ["chat", chatID],
-    queryFn: async () => {
-      if (!chatID) return null;
-      return await loadChat(chatID);
-    },
+    queryFn: () => getOneChatSession(chatID!),
     enabled: !!chatID,
   });
 
   useEffect(() => {
-    if (chat) {
-      setMessages(chat.messages);
-    } else {
-      setMessages([]);
+    if (!currentChat) {
+      setMessages(chatKey, []);
+      return;
     }
-  }, [chat]);
+
+    if (loadingByChat[chatKey]) return;
+
+    const savedMessages = mapToMessages(currentChat.details);
+    setOptimisticTitle(chatKey, "");
+    if (savedMessages.length > 0) {
+      setMessages(chatKey, savedMessages);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentChat]);
 
   const handleSend = async () => {
-    if (!message.trim() || !chatID) return;
+    if (!message.trim()) return;
 
     const userText = message.trim();
     abortControllerRef.current = new AbortController();
 
-    // chatHistory (putting each message into messages[]): current messages + new user message
-    // 1. if new message from user, push the new message into the array
     const updatedHistory: Message[] = [
       ...messages,
       { id: uuidv4(), role: "user", content: userText },
     ];
 
-    await saveChat(chatID, updatedHistory);
-    setMessages(updatedHistory);
+    setMessages(chatKey, updatedHistory);
     setMessage("");
-    setIsLoading(true);
+    setLoading(chatKey, true);
+    setOptimisticTitle(chatKey, userText.slice(0, 40));
 
-    // 2. then we wait for AI to reply
     try {
-      const aiReply = await sendMessage(
+      const title =
+        messages.length === 0
+          ? userText.slice(0, 40)
+          : currentChat?.name || "New chat";
+
+      const data = await sendMessage(
         userText,
-        updatedHistory,
+        messages,
+        chatID ?? null,
+        title,
         abortControllerRef.current.signal,
       );
-
-      // 3. after that, push AI reply into messages
-      // setMessages((prev) => [
-      //   ...prev,
-      //   {
-      //     id: uuidv4(),
-      //     role: "assistant",
-      //     content: aiReply,
-      //   },
-      // ]);
 
       const assistantMessage: Message = {
         id: uuidv4(),
         role: "assistant",
-        content: aiReply,
+        content: data.result,
       };
 
       const finalMessages = [...updatedHistory, assistantMessage];
-      setMessages(finalMessages);
-      await saveChat(chatID, finalMessages);
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return;
-      console.error(err);
+      setMessages(chatKey, finalMessages);
+      queryClient.invalidateQueries({ queryKey: ["allUsersAndChatSessions"] });
 
-      // setMessages((prev) => [
-      //   ...prev,
-      //   {
-      //     id: uuidv4(),
-      //     role: "assistant",
-      //     content: "Something went wrong.",
-      //   },
-      // ]);
+      if (!chatID && data.chat_id) {
+        setMessages(data.chat_id, finalMessages);
+        setOptimisticTitle(data.chat_id, "");
+        navigate(`/chat/${data.chat_id}`, { replace: true });
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setOptimisticTitle(chatKey, "");
+        setLoading(chatKey, false);
+        return;
+      }
+      console.error(err);
+      setOptimisticTitle(chatKey, "");
+
       const errorMessage: Message = {
         id: uuidv4(),
         role: "assistant",
-        content: "Something went wrong.",
+        content: "Something went wrong. Retry again.",
       };
-
-      const errorMessages = [...updatedHistory, errorMessage];
-
-      setMessages(errorMessages);
-      await saveChat(chatID, errorMessages);
+      setMessages(chatKey, [...updatedHistory, errorMessage]);
     } finally {
-      setIsLoading(false);
+      setLoading(chatKey, false);
     }
   };
 
   const handleStop = () => {
     abortControllerRef.current?.abort();
-    setIsLoading(false);
+    setLoading(chatKey, false);
+    setOptimisticTitle(chatKey, "");
   };
 
   return (
@@ -128,13 +141,12 @@ export default function ChatPage() {
       {messages.length > 0 && (
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2">
-            <span>{chat?.title}</span>
-            {/* <ChevronDown size={16} className="text-gray-500" /> */}
+            <span>{currentChat?.name || optimisticTitle || "New chat"}</span>
           </div>
         </div>
       )}
-      <div className="flex-1  overflow-y-auto ">
-        <div className="mx-auto w-full max-w-3xl px-4 py-6 ">
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-3xl px-4 py-6">
           {isChatLoading ? (
             <div className="min-h-[70vh] flex items-center justify-center">
               <Spin
@@ -142,19 +154,19 @@ export default function ChatPage() {
                   <LoadingOutlined spin style={{ color: "#DBDCDF" }} />
                 }
                 size="small"
-              />{" "}
+              />
             </div>
           ) : messages.length === 0 ? (
             <div className="min-h-[70vh] flex items-center justify-center">
-              <div className="text-5xl">Welcome, smanile</div>
+              <div className="text-5xl">Welcome {selectedUser?.name}</div>
             </div>
           ) : (
-            <div className="flex gap-6 flex-col ">
+            <div className="flex gap-6 flex-col">
               <span className="text-gray-400 text-sm flex justify-center">
-                {/* {dayjs().format("D MMM YYYY")} */}
-                {dayjs(chat?.createdAt).format("D MMM YYYY")}
+                {currentChat?.create_on
+                  ? dayjs(currentChat.create_on).format("D MMM YYYY")
+                  : dayjs().format("D MMM YYYY")}
               </span>
-
               <div>
                 {messages.map((msg) => {
                   const isUser = msg.role === "user";
@@ -182,7 +194,6 @@ export default function ChatPage() {
                     </div>
                   );
                 })}
-
                 {isLoading && (
                   <div className="flex gap-3 items-start mb-6">
                     <Spin
@@ -208,11 +219,7 @@ export default function ChatPage() {
             placeholder="How can I help you today..."
             autoSize={{ minRows: 1, maxRows: 8 }}
             variant="borderless"
-            styles={{
-              textarea: {
-                padding: 0,
-              },
-            }}
+            styles={{ textarea: { padding: 0 } }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -220,13 +227,12 @@ export default function ChatPage() {
               }
             }}
           />
-
           <div className="relative flex items-center mt-5">
             <button className="cursor-pointer">
               <Paperclip size={18} />
             </button>
             <div className="absolute -right-2">
-              {isLoading && (
+              {isLoading ? (
                 <Button
                   danger
                   type="primary"
@@ -235,9 +241,7 @@ export default function ChatPage() {
                 >
                   Stop <CirclePause size={15} />
                 </Button>
-              )}
-
-              {!isLoading && (
+              ) : (
                 <Button
                   type="primary"
                   onClick={handleSend}

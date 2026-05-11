@@ -1,4 +1,10 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useParams,
+} from "react-router-dom";
 
 import RegisterPage from "./pages/RegisterPage";
 import MainLayout from "./layout/MainLayout";
@@ -9,9 +15,21 @@ import UsersPage from "./pages/admin_sub_pages/UsersPage";
 import ConfigsPage from "./pages/admin_sub_pages/ConfigsPage";
 import ModelsPage from "./pages/admin_sub_pages/ModelsPage";
 import AnalyticsPage from "./pages/admin_sub_pages/AnalyticsPage";
-import { v4 as uuidv4 } from "uuid";
+import { useUserStore } from "./stores/UserStore";
+import { useEffect } from "react";
+
+function ChatPageWrapper() {
+  const { chatID } = useParams();
+  return <ChatPage key={chatID} />;
+}
 
 export default function App() {
+  const { fetchUsers } = useUserStore();
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -19,12 +37,9 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
 
         <Route element={<MainLayout />}>
-          <Route
-            index
-            element={<Navigate to={`/chat/${uuidv4()}`} replace />}
-          />
-
-          <Route path="/chat/:chatID" element={<ChatPage />} />
+          <Route index element={<Navigate to="/chat" replace />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/chat/:chatID" element={<ChatPageWrapper />} />
           <Route path="/admin" element={<AdminPage />}>
             <Route index element={<Navigate to="users" replace />} />
             <Route path="users" element={<UsersPage />} />
