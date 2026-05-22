@@ -1,53 +1,113 @@
-import { Button, Checkbox, Form, InputNumber, message, Select } from "antd";
+import {
+  Button,
+  Checkbox,
+  Form,
+  Input,
+  InputNumber,
+  message,
+  Select,
+  Switch,
+} from "antd";
 import { useOllamaModelStore } from "../../stores/OllamaModelsStore";
 import { useEffect, useState } from "react";
-import type { ConfigFormValues, ConfigPayload } from "../../types/configs";
-import { updateConfig } from "../../api/configs";
+import type {
+  ConfigFormValues,
+  ConfigPayload,
+  ConfigResponse,
+} from "../../types/configs";
+import { getConfigSettings, updateConfig } from "../../api/configs";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { AllServicesResponse } from "../../types/services";
+import { getAllServices, updateService } from "../../api/services";
 
 export default function ConfigsPage() {
   const [form] = Form.useForm();
   const { models, loadModels } = useOllamaModelStore();
   const [sameAsAbove, setSameAsAbove] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     loadModels();
   }, [loadModels]);
 
+  const {
+    data: config,
+    // isLoading,
+    // isError,
+  } = useQuery<ConfigResponse>({
+    queryKey: ["config"],
+    queryFn: getConfigSettings,
+  });
+
+  // console.log(config?.result[0]);
+
+  const { data: services } = useQuery<AllServicesResponse>({
+    queryKey: ["services"],
+    queryFn: getAllServices,
+    select: (data) => ({
+      ...data, // has other data like success and count
+      result: [...data.result].sort((a, b) => a.id - b.id), // order based on 1-5
+    }),
+  });
+
+  // console.log(services?.result);
+
+  useEffect(() => {
+    if (!config) return;
+
+    const general = config.result[0].details.general;
+    const queryAnalyser = config.result[0].details.query_analyser;
+
+    form.setFieldsValue({
+      general_provider: general.provider,
+      general_model: general.model,
+      general_is_quantised: general.is_quantised,
+      general_seed: general.seed,
+      general_default_knowledge_path: general.default_knowledge_path,
+      general_temp_knowledge_path: general.temp_knowledge_path,
+      general_api_key: general.api_key,
+
+      analyser_provider: queryAnalyser.provider,
+      analyser_model: queryAnalyser.model,
+      analyser_is_quantised: queryAnalyser.is_quantised,
+      analyser_seed: queryAnalyser.seed,
+      analyser_default_knowledge_path: queryAnalyser.default_knowledge_path,
+      analyser_temp_knowledge_path: queryAnalyser.temp_knowledge_path,
+      analyser_api_key: queryAnalyser.api_key,
+    });
+  }, [config, form]);
+
   const onSave = async (values: ConfigFormValues) => {
+    const configId = config?.result[0].id;
+    if (!configId) return;
+
     const payload: ConfigPayload = {
-      llm_name: `${values.llm}:${values.model}`,
-      is_quantized: values.quantized ?? false,
-      seed: values.seed ?? 0,
-      service: -1,
-      doc_directory: "",
-      document_path: "",
-      sameasabove: sameAsAbove,
-      query_analyser: {
-        llm_name: sameAsAbove
-          ? `${values.llm}:${values.model}`
-          : `${values.qa_llm}:${values.qa_model}`,
-        is_quantized: sameAsAbove
-          ? (values.quantized ?? false)
-          : (values.qa_quantized ?? false),
-      },
-      chess: {
-        stockfish_path: values.stockfish_path ?? "",
-      },
-      rag: {
-        topk: values.topk ?? 10,
-        retrieve_score_threshold: values.retrieve_score_threshold ?? 0.7,
-        vector_db_path: "backend/data/vector_db_cosmic",
-      },
-      openai: {
-        api_key: "",
+      name: "Default Configuration",
+      details: {
+        general: {
+          provider: values.general_provider,
+          model: values.general_model,
+          is_quantised: values.general_is_quantised,
+          seed: values.general_seed,
+          default_knowledge_path: values.general_default_knowledge_path,
+          temp_knowledge_path: values.general_temp_knowledge_path,
+          api_key: values.general_api_key,
+        },
+        query_analyser: {
+          provider: values.analyser_provider,
+          model: values.analyser_model,
+          is_quantised: values.analyser_is_quantised,
+          seed: values.analyser_seed,
+          default_knowledge_path: values.analyser_default_knowledge_path,
+          temp_knowledge_path: values.analyser_temp_knowledge_path,
+          api_key: values.analyser_api_key,
+        },
       },
     };
-    console.log("sending:", JSON.stringify(payload, null, 2)); // 👈 check this
-
     try {
-      await updateConfig(payload);
+      await updateConfig(payload, configId);
       message.success("Config saved!");
-      form.resetFields();
+      queryClient.invalidateQueries({ queryKey: ["config"] });
     } catch (error) {
       console.log(error);
       message.error("Failed to save config!");
@@ -58,9 +118,9 @@ export default function ConfigsPage() {
     setSameAsAbove(checked);
     if (checked) {
       form.setFieldsValue({
-        qa_llm: form.getFieldValue("llm"),
-        qa_model: form.getFieldValue("model"),
-        qa_quantized: form.getFieldValue("quantized"),
+        analyser_provider: form.getFieldValue("general_provider"),
+        analyser_model: form.getFieldValue("general_model"),
+        analyser_is_quantised: form.getFieldValue("general_is_quantised"),
       });
     }
   };
@@ -77,7 +137,7 @@ export default function ConfigsPage() {
           <div className="text-lg font-semibold mb-1">General</div>
 
           <Form.Item
-            name="llm"
+            name="general_provider"
             label="Choose an LLM"
             style={{ marginBottom: 8 }}
           >
@@ -88,7 +148,7 @@ export default function ConfigsPage() {
           </Form.Item>
 
           <Form.Item
-            name="model"
+            name="general_model"
             label="Select a model"
             style={{ marginBottom: 8 }}
           >
@@ -107,7 +167,7 @@ export default function ConfigsPage() {
           </Form.Item>
 
           <Form.Item
-            name="quantized"
+            name="general_is_quantised"
             valuePropName="checked"
             label="Quantized"
             style={{ marginBottom: 8 }}
@@ -116,7 +176,7 @@ export default function ConfigsPage() {
           </Form.Item>
 
           <Form.Item
-            name="seed"
+            name="general_seed"
             label="Random Seed for LLM"
             style={{ marginBottom: 8 }}
           >
@@ -128,17 +188,55 @@ export default function ConfigsPage() {
             />
           </Form.Item>
 
-          <Form.Item name="services" label="Choose the service(s)">
-            <Select
-              mode="multiple"
-              allowClear
-              placeholder="Please select services"
-              options={[
-                { value: "chess", label: "Chess" },
-                { value: "RAG", label: "RAG" },
-                { value: "vector_database", label: "Vector Database" },
-              ]}
-            />
+          <Form.Item label="Choose the service(s)">
+            <div className="grid grid-cols-2 gap-2">
+              {services?.result.map((service) => (
+                <div
+                  key={service.id}
+                  className={`flex items-center justify-between border rounded-lg px-3 py-2 ${
+                    service.status
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200"
+                  }`}
+                >
+                  <span className="capitalize">
+                    {service.name.split("_").join(" ")}
+                  </span>
+
+                  <Switch
+                    defaultChecked={service.status}
+                    onChange={async (checked) => {
+                      await updateService(service.id, {
+                        status: checked,
+                      });
+
+                      message.success("Service updated!");
+                      queryClient.invalidateQueries({ queryKey: ["services"] });
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </Form.Item>
+
+          <Form.Item
+            name="general_default_knowledge_path"
+            label="Default Knowledge Path"
+            initialValue="/app/data/default/"
+          >
+            <Input disabled />
+          </Form.Item>
+
+          <Form.Item
+            name="general_temp_knowledge_path"
+            label="Temp Knowledge Path"
+            initialValue="/app/data/temp/"
+          >
+            <Input disabled />
+          </Form.Item>
+
+          <Form.Item name="general_api_key" label="API Key" initialValue={null}>
+            <Input disabled placeholder="Null" />
           </Form.Item>
         </div>
 
@@ -152,7 +250,7 @@ export default function ConfigsPage() {
             Same as above
           </Checkbox>
           <Form.Item
-            name="qa_llm"
+            name="analyser_provider"
             label="Choose an LLM"
             style={{ marginBottom: 8 }}
           >
@@ -164,7 +262,7 @@ export default function ConfigsPage() {
           </Form.Item>
 
           <Form.Item
-            name="qa_model"
+            name="analyser_model"
             label="Select a model"
             style={{ marginBottom: 8 }}
           >
@@ -184,46 +282,35 @@ export default function ConfigsPage() {
           </Form.Item>
 
           <Form.Item
-            name="qa_quantized"
+            name="analyser_is_quantised"
             valuePropName="checked"
             label="Quantized"
           >
             <Checkbox disabled={sameAsAbove}>Enable quantized model</Checkbox>
           </Form.Item>
-        </div>
-
-        {/* Chess */}
-        <div className="flex flex-col gap-1.5">
-          <div className="text-lg font-semibold mb-1">Chess</div>
 
           <Form.Item
-            name="stockfish_path"
-            label="Select the Stockfish executable file"
-          ></Form.Item>
-        </div>
-
-        {/* RAG */}
-        <div className="flex flex-col gap-1.5">
-          <div className="text-lg font-semibold mb-1">RAG</div>
-          <Form.Item name="topk" label="Top-k" style={{ marginBottom: 8 }}>
-            <InputNumber
-              style={{ width: "100%" }}
-              min={0}
-              step={1}
-              placeholder="Enter an integer value no less than 0"
-            />
-          </Form.Item>
-          <Form.Item
-            name="retrieve_score_threshold"
-            label="Retrieve Score Threshold (enter a value between 0 and 1, default is 0.7)"
+            name="analyser_default_knowledge_path"
+            label="Default Knowledge Path"
+            initialValue="/app/data/default/"
           >
-            <InputNumber
-              style={{ width: "100%" }}
-              min={0}
-              max={1}
-              step={1}
-              placeholder="Enter a value between 0 and 1, default is 0.7"
-            />
+            <Input disabled />
+          </Form.Item>
+
+          <Form.Item
+            name="analyser_default_knowledge_path"
+            label="Temp Knowledge Path"
+            initialValue="/app/data/temp/"
+          >
+            <Input disabled />
+          </Form.Item>
+
+          <Form.Item
+            name="analyser_api_key"
+            label="API Key"
+            initialValue={null}
+          >
+            <Input disabled placeholder="Null" />
           </Form.Item>
         </div>
 
