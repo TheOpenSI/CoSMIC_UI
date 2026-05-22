@@ -1,4 +1,4 @@
-import { Button, Input, Spin } from "antd";
+import { Button, Input, Spin, Upload } from "antd";
 import { CirclePause, Orbit, Paperclip, Send } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { BsPersonFill } from "react-icons/bs";
@@ -13,8 +13,10 @@ import { LoadingOutlined } from "@ant-design/icons";
 import { mapToMessages } from "../lib/mapToMessages";
 import { useChatStore } from "../stores/ChatStore";
 import { useUserStore } from "../stores/UserStore";
+import { uploadFile } from "../api/upload";
 
 const { TextArea } = Input;
+type UploadedFile = { name: string; uid: string };
 
 export default function ChatPage() {
   const [message, setMessage] = useState("");
@@ -22,6 +24,7 @@ export default function ChatPage() {
   const { chatID } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   const chatKey = chatID ?? "new";
 
@@ -213,6 +216,37 @@ export default function ChatPage() {
 
       <div className="mx-auto w-full max-w-3xl px-4 py-4">
         <div className="bg-[#F0F5F9] rounded-2xl p-4 w-full max-w-3xl">
+          {uploadedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {uploadedFiles.map((file) => {
+                const ext = file.name.split(".").pop()?.toUpperCase() ?? "FILE";
+                return (
+                  <div
+                    key={file.uid}
+                    className="relative flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-3 py-2 w-56"
+                  >
+                    <div className="w-10 h-12 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                      <span className="text-[10px] font-bold text-gray-500">
+                        {ext}
+                      </span>
+                    </div>
+
+                    <span className="text-sm text-gray-700 truncate flex-1">
+                      {file.name}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => setUploadedFiles([])}
+                      className="absolute -top-1.5 -right-1.5 bg-gray-500 hover:bg-gray-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <TextArea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -228,9 +262,24 @@ export default function ChatPage() {
             }}
           />
           <div className="relative flex items-center mt-5">
-            <button className="cursor-pointer">
-              <Paperclip size={18} />
-            </button>
+            <Upload
+              showUploadList={false}
+              beforeUpload={async (file) => {
+                setUploadedFiles([{ name: file.name, uid: file.uid }]); // one file only for now
+                if (!chatID || !selectedUser?.id) return false; // TODO: have to come up with a solution to deal with a scenario: no chat_id or chat session how can users upload a file
+                const uploaded = await uploadFile(
+                  file,
+                  selectedUser.id,
+                  chatID,
+                );
+                console.log(uploaded);
+                return false;
+              }}
+            >
+              <button type="button" className=" cursor-pointer">
+                <Paperclip size={18} />
+              </button>
+            </Upload>
             <div className="absolute -right-2">
               {isLoading ? (
                 <Button
