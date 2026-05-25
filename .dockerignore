@@ -1,0 +1,12 @@
+.git/
+node_modules/
+docker/
+examples/
+.dockerignore
+.gitattributes
+.gitignore
+CONTRIBUTING
+*.md*
+!LICENSE
+*compose.yaml*
+*compose.yml*

@@ -1,0 +1,48 @@
+name: OpenSI-CoSMIC
+
+
+services:
+  frontend:
+    container_name: cosmic-react
+    restart: unless-stopped
+    build:
+      context: ./
+      dockerfile: ./docker/dockerfiles/react.Dockerfile
+    # NOTE:
+    # Live mounting for auto reload on dev only. Remove it and the
+    # corresponding top-level volume on prod.
+    volumes:
+      - type: bind
+        source: ./
+        target: /app
+        # NOTE:
+        # This makes `node_modules` directory container-native at runtime and not
+        # trying to bypass the ignore at build time. This's very important when
+        # you do the development in Windows.
+      - type: volume
+        source: cosmic-react-node
+        target: /app/node_modules
+    # NOTE: For quick debugging (on dev only)
+    ports:
+      - name: cosmic-react-vite
+        target: 5173
+        host_ip: 127.0.0.1
+        published: "5173"
+        protocol: tcp
+        app_protocol: http
+        mode: host
+    networks:
+        - cosmic-frontend
+
+
+volumes:
+  # NOTE: as explained above, define this only in dev (delete on prod).
+  cosmic-react-node:
+    name: cosmic-frontend-ignore
+
+
+networks:
+  cosmic-frontend:
+    name: cosmic_net
+    driver: bridge
+    external: true
