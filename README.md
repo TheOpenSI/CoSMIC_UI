@@ -42,6 +42,14 @@ Before setting up, ensure you have the appropriate tools installed depending on 
 - Native setup (running CoSMIC FE directly on your machine)
 - Docker setup (running CoSMIC FE in isolated containers)
 
+> [!NOTE]
+> The rest of this guide covers **Purpose 1**. For **Purpose 2**, refer to the
+> setup instructions in [CoSMIC_Docker repository](https://github.com/TheOpenSI/CoSMIC_Docker)
+
+1. **Module-only**: you are working on this part of the project in isolation (e.g., only CoSMIC FE).
+2. **Full-stack**: you need an end-to-end test run across all services (Front-end &rarr; Back-end &rarr; CoSMIC).
+
+Next, ensure you have the appropriate tools installed depending on your chosen execution method. This guide supports:
 
 | **Tool** | **Docker Setup**                       | **Native Setup**                                |
 | -------- | -------------------------------------- | ----------------------------------------------- |
