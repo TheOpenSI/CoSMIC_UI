@@ -1,4 +1,4 @@
-<h1 align="center">📁 Directory Hierarchy</h1>
+<h1 align="center">Directory Hierarchy</h1>
 
 ```md
 CoSMIC_UI/
@@ -38,7 +38,9 @@ CoSMIC_UI/
 ---
 # Quick Start
 
-Before setting up, decide which one is the correct purpose when you get to this modular repository:
+Before setting up, ensure you have the appropriate tools installed depending on your chosen setup method. This guide supports:
+- Native setup (running CoSMIC FE directly on your machine)
+- Docker setup (running CoSMIC FE in isolated containers)
 
 > [!NOTE]
 > The rest of this guide covers **Purpose 1**. For **Purpose 2**, refer to the
@@ -48,10 +50,6 @@ Before setting up, decide which one is the correct purpose when you get to this 
 2. **Full-stack**: you need an end-to-end test run across all services (Front-end &rarr; Back-end &rarr; CoSMIC).
 
 Next, ensure you have the appropriate tools installed depending on your chosen execution method. This guide supports:
-
-- **Native setup** (running CoSMIC FE directly on your machine)
-- **Docker setup** (running CoSMIC FE in isolated containers)
-
 
 | **Tool** | **Docker Setup**                       | **Native Setup**                                |
 | -------- | -------------------------------------- | ----------------------------------------------- |
@@ -87,22 +85,20 @@ Set-Location CoSMIC_UI\
 ---
 # Understanding Configuration Setup
 
-The frontend connects to 2 backend services ([COSMIC-DB](https://github.com/TheOpenSI/COSMIC-DB/tree/dev) & [CoSMIC](https://github.com/TheOpenSI/CoSMIC/tree/Development)) via environment variables. Understanding this structure will help you prepare the environment correctly.
-
 ## Docker Configuration
 
 Create a `.env` file in the project root directory by copying the example file:
 
 ```bash
 # Linux/MacOS
-cp .env_example .env
+cp ./env_example ./env
 ```
 ```ps1
 # Windows
 Copy-Item -Path .\.env_example -Destination .\.env
 ```
 
-Then, edit `.env` and set the URLs to match your running backend services. For example:
+Then, edit `.env` and set the URLs to match your running backend microservices. For example:
 
 ```bash
 # Linux/MacOS
@@ -126,7 +122,7 @@ VITE_API_DATABASE_URL="http://localhost:8000" # For COSMIC-DB
 
 ```bash
 # Linux/MacOS
-cp .env_example .env
+cp ./env_example ./env
 ```
 ```ps1
 # Windows
@@ -164,6 +160,11 @@ $env:VITE_API_DATABASE_URL="http://localhost:8000" # For COSMIC-DB
 ---
 # Setup & Execution
 
+> [!IMPORTANT]
+> Our frontend has environment variables that specify the connection to both of
+> the backend microservices ([COSMIC-DB](https://github.com/TheOpenSI/COSMIC-DB/tree/dev) & [CoSMIC](https://github.com/TheOpenSI/CoSMIC/tree/Development)).
+> Understanding this structure will help you prepare the environment correctly.
+
 > [!TIP]
 > Docker provides an isolated environment where the frontend runs in a container.
 > This approach is recommended if you want a consistent environment without
@@ -188,11 +189,11 @@ From the project root directory, ensure you've completed  the steps in the [Dock
 
 ```bash
 # Linux/MacOS
-sudo docker compose up --build -d   # Refer to NOTE above if running in rootless mode
+docker compose up --build -d    # Refer to NOTE above if running in rootless mode
 ```
 ```ps1
 # Windows
-docker compose up --build -d        # Docker runs through a lightweight Linux VM on Windows, so it's rootless by default
+docker compose up --build -d    # Docker runs through a lightweight Linux VM on Windows, so it's rootless by default
 ```
 
 ### **2. Verifying Docker Services**
