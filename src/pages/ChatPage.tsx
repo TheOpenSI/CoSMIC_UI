@@ -131,10 +131,11 @@ export default function ChatPage() {
       setMessages(chatKey, finalMessages);
       queryClient.invalidateQueries({ queryKey: ["allUsersAndChatSessions"] });
 
-      if (!chatID && currentChatID) {
-        setMessages(currentChatID, finalMessages);
-        setOptimisticTitle(currentChatID, "");
-        navigate(`/chat/${currentChatID}`, { replace: true });
+      const finalChatID = currentChatID ?? data.chat_id;
+      if (!chatID && finalChatID) {
+        setMessages(finalChatID, finalMessages);
+        setOptimisticTitle(finalChatID, "");
+        navigate(`/chat/${finalChatID}`, { replace: true });
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
