@@ -5,7 +5,7 @@ import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import type { Message } from "../types/chats";
-import { getOneChatSession, sendMessage } from "../api/chat";
+import { getOneChatSession, sendMessage, createChatSession } from "../api/chat";
 import ReactMarkdown from "react-markdown";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,7 +16,7 @@ import { useUserStore } from "../stores/UserStore";
 import { uploadFile } from "../api/upload";
 
 const { TextArea } = Input;
-type UploadedFile = { name: string; uid: string };
+type UploadedFile = { name: string; uid: string; file: File };
 
 export default function ChatPage() {
   const [message, setMessage] = useState("");
@@ -85,15 +85,38 @@ export default function ChatPage() {
     setOptimisticTitle(chatKey, userText.slice(0, 40));
 
     try {
+      let currentChatID = chatID;
+      let finalUserText = userText;
+
+      if (uploadedFiles.length > 0 && selectedUser?.id) {
+        if (!currentChatID) {
+          const sessionTitle = userText.slice(0, 40) || "New chat";
+          const res = await createChatSession(sessionTitle, selectedUser.id);
+          currentChatID = res.created.id;
+        }
+
+        if (currentChatID) {
+          const fileToUpload = uploadedFiles[0].file;
+          const uploadRes = await uploadFile(
+            fileToUpload,
+            selectedUser.id,
+            currentChatID,
+            "session"
+          );
+          finalUserText = `<files>${uploadRes.file_id}_${uploadRes.file_name}</files>${userText}`;
+        }
+        setUploadedFiles([]);
+      }
+
       const title =
         messages.length === 0
           ? userText.slice(0, 40)
           : currentChat?.name || "New chat";
 
       const data = await sendMessage(
-        userText,
+        finalUserText,
         messages,
-        chatID ?? null,
+        currentChatID ?? null,
         title,
         abortControllerRef.current.signal,
       );
@@ -108,10 +131,11 @@ export default function ChatPage() {
       setMessages(chatKey, finalMessages);
       queryClient.invalidateQueries({ queryKey: ["allUsersAndChatSessions"] });
 
-      if (!chatID && data.chat_id) {
-        setMessages(data.chat_id, finalMessages);
-        setOptimisticTitle(data.chat_id, "");
-        navigate(`/chat/${data.chat_id}`, { replace: true });
+      const finalChatID = currentChatID ?? data.chat_id;
+      if (!chatID && finalChatID) {
+        setMessages(finalChatID, finalMessages);
+        setOptimisticTitle(finalChatID, "");
+        navigate(`/chat/${finalChatID}`, { replace: true });
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
@@ -264,15 +288,8 @@ export default function ChatPage() {
           <div className="relative flex items-center mt-5">
             <Upload
               showUploadList={false}
-              beforeUpload={async (file) => {
-                setUploadedFiles([{ name: file.name, uid: file.uid }]); // one file only for now
-                if (!chatID || !selectedUser?.id) return false; // TODO: have to come up with a solution to deal with a scenario: no chat_id or chat session how can users upload a file
-                const uploaded = await uploadFile(
-                  file,
-                  selectedUser.id,
-                  chatID,
-                );
-                console.log(uploaded);
+              beforeUpload={(file) => {
+                setUploadedFiles([{ name: file.name, uid: file.uid, file }]);
                 return false;
               }}
             >
