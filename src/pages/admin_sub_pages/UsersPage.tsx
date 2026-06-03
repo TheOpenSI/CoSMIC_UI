@@ -14,9 +14,11 @@ import {
   Tag,
 } from "antd";
 import type { User } from "../../types/users";
+import type { Role } from "../../types/roles";
 import { useState } from "react";
 import { LoadingOutlined } from "@ant-design/icons";
 import { getAllRoles } from "../../api/roles";
+
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -95,24 +97,35 @@ export default function UsersPage() {
     },
     {
       title: "Role",
-      dataIndex: ["role", "name"],
-      render: (_: string, record: User) => {
-        const isAdmin = record.role.name === "Admin";
+      dataIndex: "role",
+      render: (
+        _: string,
+        record: User
+      ) => {
+        // Store all available roles for dropdown selection
+        const items = roles?.result?.map(
+          (role) => ({
+            key: role.id,
+            label: role.name,
+            onClick: () =>
+              handleRoleUpdate({
+                userId: record.id,
+                roleId: role.id,
+              }),
+          })
+        );
+        // Match role ID from fetched role data (Roles API) to role ID associated
+        // with user from fetched user data (Users API)
+        const userRole: Role | undefined = roles?.result?.find(role => role.id === record.role_id);
 
-        const items = roles?.result?.map((role) => ({
-          key: role.id,
-          label: role.name,
-          onClick: () =>
-            handleRoleUpdate({
-              userId: record.id,
-              roleId: role.id,
-            }),
-        }));
+        // Check for whether user with associated role ID is an 'Admin' or not,
+        // which UI design rendered will differ
+        const isAdmin: boolean = userRole?.name === "admin";
 
         return (
           <Dropdown menu={{ items }} trigger={["click"]}>
             <Tag color={isAdmin ? "green" : "blue"} className="cursor-pointer">
-              {record.role.name}
+              {userRole?.name || null}
             </Tag>
           </Dropdown>
         );
