@@ -1,8 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Table from "antd/es/table/Table";
-import { Trash2, UserRoundPlus } from "lucide-react";
-import { deleteOneUser, getAllUsers, updateUserRole } from "../../api/users";
-import dayjs from "dayjs";
+/// --- Core libraries --- ///
+import {
+  useMutation,
+  useQuery,
+  useQueryClient
+} from "@tanstack/react-query";
+import {
+  Trash2,
+  UserRoundPlus
+} from "lucide-react";
 import {
   Button,
   Dropdown,
@@ -13,11 +18,25 @@ import {
   Spin,
   Tag,
 } from "antd";
-import type { User } from "../../types/users";
-import type { Role } from "../../types/roles";
+import Table from "antd/es/table/Table";
+import dayjs from "dayjs";
 import { useState } from "react";
 import { LoadingOutlined } from "@ant-design/icons";
+
+
+/// --- Type hints --- ///
+import type { User } from "../../types/users";
+import type { Role } from "../../types/roles";
+
+
+/// --- Internal libraries --- ///
+import {
+  deleteOneUser,
+  getAllUsers,
+  updateUserRole
+} from "../../api/users";
 import { getAllRoles } from "../../api/roles";
+
 
 
 export default function UsersPage() {
@@ -62,8 +81,16 @@ export default function UsersPage() {
   });
 
   const { mutate: handleRoleUpdate } = useMutation({
-    mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) =>
-      updateUserRole(userId, roleId),
+    mutationFn: (
+      {
+        userId,
+        roleId
+      }:
+        {
+          userId: string;
+          roleId: string
+        }
+    ) => updateUserRole(userId, roleId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       message.success("Role updated!");
@@ -73,7 +100,7 @@ export default function UsersPage() {
     },
   });
 
-  // TO-DO
+  // TODO:
   // const { mutate: handleCreate } = useMutation({
   //   mutationFn: () => createOneUser({ name, email, password, role }),
   //   onSuccess: () => {
