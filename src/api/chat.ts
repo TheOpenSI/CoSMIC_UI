@@ -1,11 +1,20 @@
-import { useUserStore } from "../stores/UserStore";
+/// --- Core libraries --- ///
+
+
+/// --- Type hints --- ///
 import type {
     Chat,
     ChatSessionsResponse,
     Message,
     OneChatSessionResponse,
 } from "../types/chats";
+
+
+/// --- Internal libraries --- ///
+import { useUserStore } from "../stores/UserStore";
 import { fetchWithAuth } from "./fetchWithAuth";
+
+
 
 export async function sendMessage(
     message: string,
