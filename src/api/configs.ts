@@ -28,7 +28,7 @@ export async function updateConfig(
     id: string
 ): Promise<ConfigUpdate> {
     // Store modified configs via Configurations API first
-    const config_res: ConfigUpdate = await fetchWithAuth(
+    const configRes: ConfigUpdate = await fetchWithAuth(
         `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/configs/${id}`,
         {
             method: "PATCH",
@@ -37,31 +37,33 @@ export async function updateConfig(
     );
 
 
-    // Then re-build CoSMIC stated configs only if above API calls succeed
-    if (config_res?.success) {
-        message.loading({
-            content: "Updated configs data, re-building CoSMIC...",
-            key: "configUpdate",
-            duration: 0,
-        })
 
+    if (!configRes?.success) {
+        // Not likely to happens but configs data not updated with `False` success value
+        throw new Error("Update configs data failed");
+
+    } else {
+        // Then re-build CoSMIC stated configs only if above API calls succeed
         try {
-            const cosmic_res: CosmicUpdate = await fetchWithAuth(
+            message.loading({
+                content: "Updated configs data, re-building CoSMIC...",
+                key: "configUpdate",
+                duration: 0,
+            })
+
+            const cosmicRes: CosmicUpdate = await fetchWithAuth(
                 `${import.meta.env.VITE_API_BASE_URL}/api/v1/cosmic`,
                 {
                     method: "PATCH",
                 },
             )
 
-            console.debug(`CoSMIC response data: ${cosmic_res}`)
-            return config_res;
+            console.debug(`CoSMIC response data: ${cosmicRes.message}`)
+            return configRes;
 
         } catch (error) {
             // Modified configs data saved but CoSMIC re-build failed
-            throw new Error("Updated configs data, CoSMIC failed to re-build.");
+            throw new Error("CoSMIC failed to re-build.");
         }
-
-    } else {
-        return config_res;
     }
 }
