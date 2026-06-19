@@ -1,4 +1,4 @@
-export type ServiceEnable = {
+export type ServicePublic = {
     id: number;
     name: string;
     desc: string;
@@ -8,8 +8,8 @@ export type ServiceEnable = {
 };
 
 
-export type AllServicesResponse = {
+export type ServicesPublic = {
     success: boolean;
     count: number;
-    result: ServiceEnable[];
+    result: ServicePublic[];
 };

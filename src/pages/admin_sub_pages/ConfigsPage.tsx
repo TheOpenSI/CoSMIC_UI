@@ -1,3 +1,4 @@
+/// --- Core libraries --- ///
 import {
     Button,
     Checkbox,
@@ -9,16 +10,36 @@ import {
     Switch,
 } from "antd";
 import { useOllamaModelStore } from "../../stores/OllamaModelsStore";
-import { useEffect, useState } from "react";
+import {
+    useEffect,
+    useState
+} from "react";
+import {
+    useQuery,
+    useQueryClient
+} from "@tanstack/react-query";
+
+
+/// --- Type hints --- ///
+import type { ServicesPublic } from "../../types/services";
 import type {
     ConfigFormValues,
     ConfigPayload,
-    ConfigResponse,
+    ConfigResponse
 } from "../../types/configs";
-import { getConfigSettings, updateConfig } from "../../api/configs";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AllServicesResponse } from "../../types/services";
-import { getAllServices, updateService } from "../../api/services";
+
+
+/// --- Internal libraries --- ///
+import {
+    getConfigSettings,
+    updateConfig
+} from "../../api/configs";
+import {
+    getServices,
+    updateService
+} from "../../api/services";
+
+
 
 export default function ConfigsPage() {
     const [form] = Form.useForm();
@@ -41,9 +62,9 @@ export default function ConfigsPage() {
 
     // console.log(config?.result[0]);
 
-    const { data: services } = useQuery<AllServicesResponse>({
+    const { data: services } = useQuery<ServicesPublic>({
         queryKey: ["services"],
-        queryFn: getAllServices,
+        queryFn: getServices,
         select: (data) => ({
             ...data, // has other data like success and count
             result: [...data.result].sort((a, b) => a.id - b.id), // order based on 1-5
