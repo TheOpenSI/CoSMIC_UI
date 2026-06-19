@@ -1,4 +1,5 @@
 /// --- Core libraries --- ///
+import { message } from "antd";
 
 
 /// --- Type hints --- ///
@@ -36,17 +37,29 @@ export async function updateConfig(
     );
 
 
-    // Then rebuild CoSMIC stated configs only if above API calls succeed
+    // Then re-build CoSMIC stated configs only if above API calls succeed
     if (config_res?.success) {
-        const cosmic_res: CosmicUpdate = await fetchWithAuth(
-            `${import.meta.env.VITE_API_BASE_URL}/api/v1/cosmic`,
-            {
-                method: "PATCH",
-            },
-        )
+        message.loading({
+            content: "Updated configs data, re-building CoSMIC...",
+            key: "configUpdate",
+            duration: 0,
+        })
 
-        console.debug(cosmic_res);
-        return config_res;
+        try {
+            const cosmic_res: CosmicUpdate = await fetchWithAuth(
+                `${import.meta.env.VITE_API_BASE_URL}/api/v1/cosmic`,
+                {
+                    method: "PATCH",
+                },
+            )
+
+            console.debug(`CoSMIC response data: ${cosmic_res}`)
+            return config_res;
+
+        } catch (error) {
+            // Modified configs data saved but CoSMIC re-build failed
+            throw new Error("Updated configs data, CoSMIC failed to re-build.");
+        }
 
     } else {
         return config_res;

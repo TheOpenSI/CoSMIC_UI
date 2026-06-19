@@ -10,8 +10,14 @@ import {
     Switch,
 } from "antd";
 import { useOllamaModelStore } from "../../stores/OllamaModelsStore";
-import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    useEffect,
+    useState
+} from "react";
+import {
+    useQuery,
+    useQueryClient
+} from "@tanstack/react-query";
 
 
 /// --- Type hints --- ///
@@ -126,12 +132,20 @@ export default function ConfigsPage() {
 
         try {
             await updateConfig(payload, configId);
-            message.success("Config saved!");
+
+            message.success({
+                content: "Config saved and applied!",
+                key: "configUpdate",
+            });
+
             queryClient.invalidateQueries({ queryKey: ["config"] });
 
         } catch (error) {
-            console.log(error);
-            message.error("Failed to save config!");
+            console.error(error);
+            message.error({
+                content: "Save config failed!",
+                key: "configUpdate",
+            });
         }
     };
 
