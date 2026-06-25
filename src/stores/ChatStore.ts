@@ -8,6 +8,7 @@ type ChatStore = {
   setMessages: (chatID: string, messages: Message[]) => void;
   setLoading: (chatID: string, loading: boolean) => void;
   setOptimisticTitle: (chatID: string, title: string) => void;
+  resetChat: (chatID: string) => void;
 };
 
 export const useChatStore = create<ChatStore>((set) => ({
@@ -35,4 +36,14 @@ export const useChatStore = create<ChatStore>((set) => ({
         [chatID]: title,
       },
     })),
+  resetChat: (chatID) =>
+    set((state) => {
+      const messagesByChat = { ...state.messagesByChat };
+      const loadingByChat = { ...state.loadingByChat };
+      const optimisticTitleByChat = { ...state.optimisticTitleByChat };
+      delete messagesByChat[chatID];
+      delete loadingByChat[chatID];
+      delete optimisticTitleByChat[chatID];
+      return { messagesByChat, loadingByChat, optimisticTitleByChat };
+    }),
 }));

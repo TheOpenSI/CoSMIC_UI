@@ -86,3 +86,21 @@ export async function deleteChatSession(chatID: string): Promise<void> {
         { method: "DELETE" },
     );
 }
+
+
+export async function createChatSession(
+    title: string,
+    userId: string,
+): Promise<{ created: { id: string } }> {
+    return fetchWithAuth(
+        `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/chatboxes/`,
+        {
+            method: "POST",
+            body: JSON.stringify({
+                user_id: userId,
+                name: title,
+                details: [],
+            }),
+        },
+    );
+}
