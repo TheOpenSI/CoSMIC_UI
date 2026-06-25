@@ -13,10 +13,10 @@ export default function AdminPage() {
     },
     { key: "models", label: "Models", icon: Cpu, path: "/admin/models" },
     {
-      key: "analytics",
-      label: "Analytics",
+      key: "Dashboard",
+      label: "Dashboard",
       icon: ChartCandlestick,
-      path: "/admin/analytics",
+      path: "/admin/DashBoard",
     },
   ];
 

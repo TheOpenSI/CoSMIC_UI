@@ -14,7 +14,7 @@ import ChatPage from "./pages/ChatPage";
 import UsersPage from "./pages/admin_sub_pages/UsersPage";
 import ConfigsPage from "./pages/admin_sub_pages/ConfigsPage";
 import ModelsPage from "./pages/admin_sub_pages/ModelsPage";
-import AnalyticsPage from "./pages/admin_sub_pages/AnalyticsPage";
+import DashboardPage from "./pages/admin_sub_pages/DashBoardpage";
 import { useUserStore } from "./stores/UserStore";
 import { useEffect } from "react";
 
@@ -45,7 +45,7 @@ export default function App() {
             <Route path="users" element={<UsersPage />} />
             <Route path="configs" element={<ConfigsPage />} />
             <Route path="models" element={<ModelsPage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="dashboard" element={<DashboardPage/>} />
           </Route>
         </Route>
       </Routes>
