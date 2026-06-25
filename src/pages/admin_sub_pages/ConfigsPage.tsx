@@ -18,11 +18,13 @@ import {
     useQuery,
     useQueryClient
 } from "@tanstack/react-query";
+import { isEqual } from "lodash";
 
 
 /// --- Type hints --- ///
 import type { ServicesPublic } from "../../types/services";
 import type {
+    ConfigDetails,
     ConfigFormValues,
     ConfigPayload,
     ConfigResponse
@@ -47,9 +49,10 @@ export default function ConfigsPage() {
     const [sameAsAbove, setSameAsAbove] = useState(false);
     const queryClient = useQueryClient();
 
-    useEffect(() => {
-        loadModels();
-    }, [loadModels]);
+    useEffect(
+        () => { loadModels(); },
+        [loadModels]
+    );
 
     const {
         data: config,
@@ -73,65 +76,90 @@ export default function ConfigsPage() {
 
     // console.log(services?.result);
 
-    useEffect(() => {
-        if (!config) return;
+    useEffect(
+        () => {
+            if (!config) return;
 
-        const general = config.result[0].details.general;
-        const queryAnalyser = config.result[0].details.query_analyser;
+            const general = config.result[0].details.general;
+            const queryAnalyser = config.result[0].details.query_analyser;
 
-        form.setFieldsValue({
-            general_provider: general.provider,
-            general_model: general.model,
-            general_is_quantised: general.is_quantised,
-            general_seed: general.seed,
-            general_default_knowledge_path: general.default_knowledge_path,
-            general_temp_knowledge_path: general.temp_knowledge_path,
-            general_api_key: general.api_key,
+            form.setFieldsValue({
+                general_provider: general.provider,
+                general_model: general.model,
+                general_is_quantised: general.is_quantised,
+                general_seed: general.seed,
+                general_default_knowledge_path: general.default_knowledge_path,
+                general_temp_knowledge_path: general.temp_knowledge_path,
+                general_api_key: general.api_key,
 
-            analyser_provider: queryAnalyser.provider,
-            analyser_model: queryAnalyser.model,
-            analyser_is_quantised: queryAnalyser.is_quantised,
-            analyser_seed: queryAnalyser.seed,
-            analyser_default_knowledge_path: queryAnalyser.default_knowledge_path,
-            analyser_temp_knowledge_path: queryAnalyser.temp_knowledge_path,
-            analyser_api_key: queryAnalyser.api_key,
-        });
-    }, [config, form]);
+                analyser_provider: queryAnalyser.provider,
+                analyser_model: queryAnalyser.model,
+                analyser_is_quantised: queryAnalyser.is_quantised,
+                analyser_seed: queryAnalyser.seed,
+                analyser_default_knowledge_path: queryAnalyser.default_knowledge_path,
+                analyser_temp_knowledge_path: queryAnalyser.temp_knowledge_path,
+                analyser_api_key: queryAnalyser.api_key,
+            });
+        },
+        [config, form]
+    );
 
     const onSave = async (values: ConfigFormValues) => {
         const configId = config?.result[0].id;
         if (!configId) return;
 
-        const payload: ConfigPayload = {
-            name: "Default Configuration",
-            details: {
-                general: {
-                    provider: values.general_provider,
-                    model: values.general_model,
-                    is_quantised: values.general_is_quantised,
-                    seed: values.general_seed,
-                    default_knowledge_path: values.general_default_knowledge_path,
-                    temp_knowledge_path: values.general_temp_knowledge_path,
-                    api_key: values.general_api_key,
-                },
-                query_analyser: {
-                    provider: values.analyser_provider,
-                    model: values.analyser_model,
-                    is_quantised: values.analyser_is_quantised,
-                    seed: values.analyser_seed,
-                    default_knowledge_path: values.analyser_default_knowledge_path,
-                    temp_knowledge_path: values.analyser_temp_knowledge_path,
-                    api_key: values.analyser_api_key,
-                },
+        const oldConfigsDetails: ConfigDetails = config?.result[0].details;
+        const newConfigsDetails: ConfigPayload["details"] = {
+            general: {
+                provider: values.general_provider,
+                model: values.general_model,
+                is_quantised: values.general_is_quantised,
+                seed: values.general_seed,
+                default_knowledge_path: values.general_default_knowledge_path,
+                temp_knowledge_path: values.general_temp_knowledge_path,
+                api_key: values.general_api_key,
+            },
+            query_analyser: {
+                provider: values.analyser_provider,
+                model: values.analyser_model,
+                is_quantised: values.analyser_is_quantised,
+                seed: values.analyser_seed,
+                default_knowledge_path: values.analyser_default_knowledge_path,
+                temp_knowledge_path: values.analyser_temp_knowledge_path,
+                api_key: values.analyser_api_key,
             },
         };
+
+        // Don't do anything and warns users about updating identical configs data
+        if (oldConfigsDetails && isEqual(oldConfigsDetails, newConfigsDetails)) {
+            message.warning({
+                content: "No configs modified, nothing to save!",
+                key: "configUpdate",
+            });
+            return;
+        }
+
+        const payload: ConfigPayload = {
+            name: "Default Configuration",
+            details: newConfigsDetails,
+        };
+
         try {
             await updateConfig(payload, configId);
-            message.success("Config saved!");
+
+            message.success({
+                content: "Config saved and applied!",
+                key: "configUpdate",
+            });
+
             queryClient.invalidateQueries({ queryKey: ["config"] });
+
         } catch (error) {
-            console.log(error);
-            message.error("Failed to save config!");
+            console.error(error);
+            message.error({
+                content: "Save config failed!",
+                key: "configUpdate",
+            });
         }
     };
 
@@ -142,9 +170,12 @@ export default function ConfigsPage() {
                 analyser_provider: form.getFieldValue("general_provider"),
                 analyser_model: form.getFieldValue("general_model"),
                 analyser_is_quantised: form.getFieldValue("general_is_quantised"),
+                analyser_seed: form.getFieldValue("general_seed"),
             });
         }
     };
+
+
     return (
         <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1.5 mb-3">
@@ -327,6 +358,20 @@ export default function ConfigsPage() {
                     </Form.Item>
 
                     <Form.Item
+                        name="analyser_seed"
+                        label="Random Seed for LLM"
+                        style={{ marginBottom: 8 }}
+                    >
+                        <InputNumber
+                            style={{ width: "100%" }}
+                            min={0}
+                            step={1}
+                            placeholder="Enter an integer value no less than 0"
+                            disabled={sameAsAbove}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
                         name="analyser_default_knowledge_path"
                         label="Default Knowledge Path"
                         initialValue="/app/data/default/"
@@ -335,7 +380,7 @@ export default function ConfigsPage() {
                     </Form.Item>
 
                     <Form.Item
-                        name="analyser_default_knowledge_path"
+                        name="analyser_temp_knowledge_path"
                         label="Temp Knowledge Path"
                         initialValue="/app/data/temp/"
                     >
