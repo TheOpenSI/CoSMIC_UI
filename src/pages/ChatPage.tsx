@@ -1,11 +1,17 @@
 import { Button, Input, Spin } from "antd";
-import { CirclePause, Orbit, Paperclip, Send } from "lucide-react";
+import { CirclePause, Orbit, Paperclip, Send, X } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import type { Message } from "../types/chats";
-import { getOneChatSession, sendMessage } from "../api/chat";
+import {
+  createChatSession,
+  deleteChatSession,
+  getOneChatSession,
+  sendMessage,
+} from "../api/chat";
+import { uploadFile } from "../api/upload";
 import ReactMarkdown from "react-markdown";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -18,6 +24,8 @@ const { TextArea } = Input;
 
 export default function ChatPage() {
   const [message, setMessage] = useState("");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { chatID } = useParams();
   const navigate = useNavigate();
@@ -37,6 +45,7 @@ export default function ChatPage() {
     setMessages,
     setLoading,
     setOptimisticTitle,
+    resetChat,
   } = useChatStore();
 
   const messages = messagesByChat[chatKey] ?? [];
@@ -81,16 +90,43 @@ export default function ChatPage() {
     setLoading(chatKey, true);
     setOptimisticTitle(chatKey, userText.slice(0, 40));
 
+    // Track a session to roll back if the upload/send fails 
+    let createdSessionId: string | null = null;
+
     try {
       const title =
         messages.length === 0
           ? userText.slice(0, 40)
           : currentChat?.name || "New chat";
 
+      let currentChatID = chatID;
+      let finalUserText = userText;
+
+      // If a file is attached, upload it to session memory first, then prepend a
+      // <files> reference so the backend embeds/retrieves it for this session.
+      if (pendingFile && selectedUser?.id) {
+        // A chat session must exist before upload so the file's session_id
+        // matches the chat we send the message to.
+        if (!currentChatID) {
+          const created = await createChatSession(title, selectedUser.id);
+          currentChatID = created.created.id;
+          createdSessionId = currentChatID;
+        }
+
+        const uploadRes = await uploadFile(
+          pendingFile,
+          selectedUser.id,
+          currentChatID,
+          "session",
+        );
+        finalUserText = `<files>${uploadRes.file_id}_${uploadRes.file_name}</files>${userText}`;
+        setPendingFile(null);
+      }
+
       const data = await sendMessage(
-        userText,
+        finalUserText,
         messages,
-        chatID ?? null,
+        currentChatID ?? null,
         title,
         abortControllerRef.current.signal,
       );
@@ -105,10 +141,13 @@ export default function ChatPage() {
       setMessages(chatKey, finalMessages);
       queryClient.invalidateQueries({ queryKey: ["allUsersAndChatSessions"] });
 
-      if (!chatID && data.chat_id) {
-        setMessages(data.chat_id, finalMessages);
-        setOptimisticTitle(data.chat_id, "");
-        navigate(`/chat/${data.chat_id}`, { replace: true });
+      const finalChatID = currentChatID ?? data.chat_id;
+      if (!chatID && finalChatID) {
+        setMessages(finalChatID, finalMessages);
+        setOptimisticTitle(finalChatID, "");
+        navigate(`/chat/${finalChatID}`, { replace: true });
+        // The conversation now lives under the chat id so the next new chat starts clean
+        resetChat("new");
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
@@ -119,10 +158,25 @@ export default function ChatPage() {
       console.error(err);
       setOptimisticTitle(chatKey, "");
 
+      // Roll back the empty session so it doesn't linger.
+      if (createdSessionId) {
+        try {
+          await deleteChatSession(createdSessionId);
+          queryClient.invalidateQueries({
+            queryKey: ["allUsersAndChatSessions"],
+          });
+        } catch {
+          // best-effort cleanup
+        }
+      }
+
       const errorMessage: Message = {
         id: uuidv4(),
         role: "assistant",
-        content: "Something went wrong. Retry again.",
+        content:
+          err instanceof Error && err.message
+            ? `Something went wrong: ${err.message}`
+            : "Something went wrong. Retry again.",
       };
       setMessages(chatKey, [...updatedHistory, errorMessage]);
     } finally {
@@ -187,7 +241,7 @@ export default function ChatPage() {
                             <Orbit size={22} />
                           </div>
                           <div className="mt-1 text-gray-800 px-1 py-2 text-sm max-w-172 prose prose-sm">
-                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            <ReactMarkdown>{msg.content ?? ""}</ReactMarkdown>
                           </div>
                         </div>
                       )}
@@ -212,6 +266,19 @@ export default function ChatPage() {
       </div>
 
       <div className="mx-auto w-full max-w-3xl px-4 py-4">
+        {pendingFile && (
+          <div className="mb-2 inline-flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm shadow-sm">
+            <span className="max-w-72 truncate">{pendingFile.name}</span>
+            <button
+              type="button"
+              className="cursor-pointer text-gray-400 hover:text-gray-700"
+              onClick={() => setPendingFile(null)}
+              aria-label="Remove file"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
         <div className="bg-[#F0F5F9] rounded-2xl p-4 w-full max-w-3xl">
           <TextArea
             value={message}
@@ -228,7 +295,23 @@ export default function ChatPage() {
             }}
           />
           <div className="relative flex items-center mt-5">
-            <button className="cursor-pointer">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf,.pdf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setPendingFile(file);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              className="cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Attach a PDF file"
+            >
               <Paperclip size={18} />
             </button>
             <div className="absolute -right-2">

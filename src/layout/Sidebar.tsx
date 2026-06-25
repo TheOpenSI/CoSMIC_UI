@@ -5,10 +5,12 @@ import {
   UserRound,
 } from "lucide-react";
 import { useSidebarStore } from "../stores/SidebarStore";
+import { useChatStore } from "../stores/ChatStore";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const resetChat = useChatStore((state) => state.resetChat);
   const isOpen = useSidebarStore((state) => state.isOpen);
   const open = useSidebarStore((state) => state.open);
   const openChatPanel = useSidebarStore((state) => state.openChatPanel);
@@ -81,8 +83,9 @@ export default function Sidebar() {
             // ))}*/}
           {!isOpen && (
             <button
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
+                resetChat("new");
                 navigate("/chat", { replace: true });
               }}
               className="p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer "
@@ -95,8 +98,12 @@ export default function Sidebar() {
             onClick={(e) => {
               e.stopPropagation();
               openChatPanel();
-              if (chatID) navigate(`/chat/${chatID}`, { replace: true });
-              else navigate("/chat", { replace: true });
+              if (chatID) {
+                navigate(`/chat/${chatID}`, { replace: true });
+              } else {
+                resetChat("new");
+                navigate("/chat", { replace: true });
+              }
             }}
             className={`p-2 flex items-center justify-center rounded-xl hover:bg-gray-300 cursor-pointer  ${isOpen ? "px-2.5 py-1.5 flex-col " : "p-2"}${chatsSelected ? "bg-gray-300" : "hover:bg-gray-300"}`}
           >
