@@ -13,6 +13,7 @@ export async function uploadFile(
   userId: string,
   chatSessionId: string,
   memoryType: string = "session",
+  signal?: AbortSignal
 ) {
   const formData = new FormData();
   formData.append("file", file);
@@ -28,6 +29,7 @@ export async function uploadFile(
     {
       method: "POST",
       body: formData,
+      signal,
     },
   );
 
