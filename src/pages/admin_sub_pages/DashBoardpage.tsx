@@ -1,11 +1,67 @@
 /// --- Core libraries --- ///
 import { useEffect, useMemo, useState } from "react";
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
 
 /// --- Type hints --- ///
-import type { AllEmissionsResponse } from "../../types/DashBoard";
+import type { AllEmissionsResponse, Emission } from "../../types/DashBoard";
 
 /// --- Internal libraries --- ///
 import { getUserEmissions, getAllEmissions } from "../../api/DashBoard";
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+);
+
+const MONTH_LABELS: string[] = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+const TARGET_YEAR: number = new Date().getFullYear();
+
+/**
+ * Groups emissions rows by month (0-11) for TARGET_YEAR, summing
+ * `emissions` per month. Months with no data — including any month
+ * later than the current real-world month — are returned as `null`
+ * so Chart.js renders an empty/no-bar gap instead of a false zero.
+ */
+function buildMonthlyEmissions(rows: Emission[]): (number | null)[] {
+    const monthlyTotals: number[] = new Array(12).fill(0);
+    const monthlyHasData: boolean[] = new Array(12).fill(false);
+
+    for (const row of rows) {
+        const date = new Date(row.timestamp);
+
+        if (date.getFullYear() !== TARGET_YEAR) {
+            continue;
+        }
+
+        const monthIndex = date.getMonth(); // 0 = Jan, 6 = Jul, etc.
+        monthlyTotals[monthIndex] += row.emissions ?? 0;
+        monthlyHasData[monthIndex] = true;
+    }
+
+    // NOTE:
+    // A month with zero rows becomes `null` (not 0) so the chart visibly
+    // shows "no data" rather than implying zero emissions were recorded.
+    // This also naturally covers future months (e.g. Aug 2026 onward,
+    // and therefore render as null automatically, no extra date check needed.
+    return monthlyTotals.map((total, i) => (monthlyHasData[i] ? total : null));
+}
 
 export default function DashboardPage() {
     const [userEmissions, setUserEmissions] = useState<AllEmissionsResponse | null>(null);
@@ -53,7 +109,7 @@ export default function DashboardPage() {
         [userRows]
     );
 
-    // placeholder (future feature)
+    // for future usage 
     const totalTokenUsage = 0;
 
     // ─────────────────────────────────────────────
@@ -63,6 +119,61 @@ export default function DashboardPage() {
         () => allRows.reduce((sum, r) => sum + (r.emissions ?? 0), 0),
         [allRows]
     );
+
+    // ─────────────────────────────────────────────
+    // MONTH-WISE EMISSIONS (ALL USERS, TARGET_YEAR)
+    // ─────────────────────────────────────────────
+    const monthlyEmissions = useMemo(
+        () => buildMonthlyEmissions(allRows),
+        [allRows]
+    );
+
+    const chartData = useMemo(
+        () => ({
+            labels: MONTH_LABELS,
+            datasets: [
+                {
+                    label: `Total Emissions (kg CO₂) — ${TARGET_YEAR}`,
+                    data: monthlyEmissions,
+                    backgroundColor: "rgba(53, 162, 235, 0.6)",
+                    borderRadius: 4,
+                },
+            ],
+        }),
+        [monthlyEmissions]
+    );
+
+    const chartOptions = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: "top" as const,
+            },
+            title: {
+                display: true,
+                text: `CoSMIC Emissions — ${TARGET_YEAR}`,
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context: any) => {
+                        const value = context.raw;
+                        return value === null
+                            ? "No data"
+                            : `${value.toFixed(8)} kg CO₂`;
+                    },
+                },
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: "kg CO₂",
+                },
+            },
+        },
+    };
 
     if (loading) {
         return <p>Loading dashboard...</p>;
@@ -118,11 +229,13 @@ export default function DashboardPage() {
                 )}
             </section>
 
-            {/* ── GLOBAL SECTION ───────────────────────────── */}
+            {/* Month-wise chart */}
             <section>
-                <h2>Total Emissions (All Users)</h2>
-                <p>Total records: {allEmissions?.count ?? 0}</p>
-                <p>Total CO₂: {totalEmissionsKg.toFixed(8)} kg</p>
+
+                {/* ── Month-wise chart ──────────────────────── */}
+                <div className="mt-6 bg-white p-4 rounded-xl border border-gray-200">
+                    <Bar options={chartOptions} data={chartData} />
+                </div>
             </section>
         </div>
     );
