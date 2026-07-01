@@ -5,11 +5,13 @@ import {
     CategoryScale,
     LinearScale,
     BarElement,
+    LineElement,
+    PointElement,
     Title,
     Tooltip,
     Legend,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 
 /// --- Type hints --- ///
 import type { AllEmissionsResponse, Emission } from "../../types/DashBoard";
@@ -17,15 +19,18 @@ import type { AllEmissionsResponse, Emission } from "../../types/DashBoard";
 /// --- Internal libraries --- ///
 import { getUserEmissions, getAllEmissions } from "../../api/DashBoard";
 
+//  chart js .
 ChartJS.register(
     CategoryScale,
     LinearScale,
     BarElement,
+    LineElement,
+    PointElement,
     Title,
     Tooltip,
     Legend
 );
-
+// constants
 const MONTH_LABELS: string[] = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
@@ -33,13 +38,11 @@ const MONTH_LABELS: string[] = [
 
 const TARGET_YEAR: number = new Date().getFullYear();
 
-/**
- * Groups emissions rows by month (0-11) for TARGET_YEAR, summing
- * `emissions` per month. Months with no data — including any month
- * later than the current real-world month — are returned as `null`
- * so Chart.js renders an empty/no-bar gap instead of a false zero.
- */
-function buildMonthlyEmissions(rows: Emission[]): (number | null)[] {
+type RangeOption = 3 | 6 | 12;
+const RANGE_OPTIONS: RangeOption[] = [3, 6, 12];  // options for user to select rolling window for trend chart
+
+// build yearly emissions for the bar chart, with null for months with no data
+function buildYearlyEmissions(rows: Emission[]): (number | null)[] {
     const monthlyTotals: number[] = new Array(12).fill(0);
     const monthlyHasData: boolean[] = new Array(12).fill(false);
 
@@ -47,53 +50,92 @@ function buildMonthlyEmissions(rows: Emission[]): (number | null)[] {
         const date = new Date(row.timestamp);
 
         if (date.getFullYear() !== TARGET_YEAR) {
-            continue;
+            continue; // skiping data which is not in the target year
         }
 
-        const monthIndex = date.getMonth(); // 0 = Jan, 6 = Jul, etc.
+        const monthIndex = date.getMonth();
         monthlyTotals[monthIndex] += row.emissions ?? 0;
         monthlyHasData[monthIndex] = true;
     }
 
-    // NOTE:
-    // A month with zero rows becomes `null` (not 0) so the chart visibly
-    // shows "no data" rather than implying zero emissions were recorded.
-    // This also naturally covers future months (e.g. Aug 2026 onward,
-    // and therefore render as null automatically, no extra date check needed.
     return monthlyTotals.map((total, i) => (monthlyHasData[i] ? total : null));
+}
+// build monthly totals keyed by year-month for the rolling trend line chart with emissions data, e.g. { "2026-3": 12.34, "2026-4": 56.78 }
+function buildMonthlyTotalsByYearMonth(rows: Emission[]): Map<string, number> {
+    const totals = new Map<string, number>();
+
+    for (const row of rows) {
+        const date = new Date(row.timestamp);
+        const key = `${date.getFullYear()}-${date.getMonth()}`; // e.g. "2026-3"
+        totals.set(key, (totals.get(key) ?? 0) + (row.emissions ?? 0));
+    }
+
+    return totals;
+}
+
+// build range with respected to user selected options 
+function getRollingYearMonths(range: RangeOption): { year: number; month: number }[] {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    return Array.from({ length: range }, (_, i) => {
+        const offset = range - 1 - i;
+        const d = new Date(currentYear, currentMonth - offset, 1);
+        return { year: d.getFullYear(), month: d.getMonth() };
+    });
+}
+
+//  condiiton to match the data of this year and last year to avoid duplicate data in chart and also matching what buildmonthlytotals and getrollingyearmonths returns in below function
+function getRollingSeries(
+    totalsByYearMonth: Map<string, number>,
+    range: RangeOption
+): { labels: string[]; data: (number | null)[] } {
+    const yearMonths = getRollingYearMonths(range);
+    const spansMultipleYears = new Set(yearMonths.map((ym) => ym.year)).size > 1;
+
+    const labels = yearMonths.map(({ year, month }) =>
+        spansMultipleYears
+            ? `${MONTH_LABELS[month]} '${String(year).slice(2)}`
+            : MONTH_LABELS[month]
+    );
+
+    const data = yearMonths.map(({ year, month }) => {
+        const key = `${year}-${month}`;
+        return totalsByYearMonth.has(key) ? totalsByYearMonth.get(key)! : null;
+    });
+
+    return { labels, data };
 }
 
 export default function DashboardPage() {
     const [userEmissions, setUserEmissions] = useState<AllEmissionsResponse | null>(null);
     const [allEmissions, setAllEmissions] = useState<AllEmissionsResponse | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
-
-    const fetchData = async (): Promise<void> => {
-        setLoading(true);
-
-        const [userRes, allRes] = await Promise.all([
-            getUserEmissions(),
-            getAllEmissions(),
-        ]);
-
-        setUserEmissions(userRes);
-        setAllEmissions(allRes);
-        setLoading(false);
-    };
+    const [range, setRange] = useState<RangeOption>(3);
 
     useEffect(() => {
+        const fetchData = async (): Promise<void> => {
+            setLoading(true);
+
+            const [userRes, allRes] = await Promise.all([
+                getUserEmissions(),
+                getAllEmissions(),
+            ]);
+
+            setUserEmissions(userRes);
+            setAllEmissions(allRes);
+            setLoading(false);
+        };
+
         fetchData();
     }, []);
 
-    // ─────────────────────────────────────────────
-    // DATA ARRAYS
-    // ─────────────────────────────────────────────
+    // arrays or data for both all and user 
     const userRows = userEmissions?.result ?? [];
     const allRows = allEmissions?.result ?? [];
 
-    // ─────────────────────────────────────────────
-    // KPI CALCULATIONS (USER LEVEL)
-    // ─────────────────────────────────────────────
+    // summary calculation for top boxes on dashboard page
     const totalUserEmissions = useMemo(
         () => userRows.reduce((sum, r) => sum + (r.emissions ?? 0), 0),
         [userRows]
@@ -109,57 +151,49 @@ export default function DashboardPage() {
         [userRows]
     );
 
-    // for future usage 
-    const totalTokenUsage = 0;
+    const totalTokenUsage = 0; // placeholder for future feature
 
-    // ─────────────────────────────────────────────
-    // GLOBAL KPI (ALL USERS)
-    // ─────────────────────────────────────────────
-    const totalEmissionsKg = useMemo(
-        () => allRows.reduce((sum, r) => sum + (r.emissions ?? 0), 0),
-        [allRows]
+    // memos for storing data temporary so not calculated on every render, only when userRows or range changes
+    const userMonthlyTotals = useMemo(
+        () => buildMonthlyTotalsByYearMonth(userRows),
+        [userRows]
     );
 
-    // ─────────────────────────────────────────────
-    // MONTH-WISE EMISSIONS (ALL USERS, TARGET_YEAR)
-    // ─────────────────────────────────────────────
-    const monthlyEmissions = useMemo(
-        () => buildMonthlyEmissions(allRows),
-        [allRows]
+    const { labels: rollingLabels, data: rollingUserData } = useMemo(
+        () => getRollingSeries(userMonthlyTotals, range),
+        [userMonthlyTotals, range]
     );
+    // line chart and memo declaration
 
-    const chartData = useMemo(
+    const userLineChartData = useMemo(
         () => ({
-            labels: MONTH_LABELS,
+            labels: rollingLabels,
             datasets: [
                 {
-                    label: `Total Emissions (kg CO₂) — ${TARGET_YEAR}`,
-                    data: monthlyEmissions,
-                    backgroundColor: "rgba(53, 162, 235, 0.6)",
-                    borderRadius: 4,
+                    label: "Your Emissions (kg CO₂)",
+                    data: rollingUserData,
+                    borderColor: "rgb(75, 192, 192)",
+                    backgroundColor: "rgba(75, 192, 192, 0.2)",
+                    tension: 0.1,
+                    spanGaps: false,
                 },
             ],
         }),
-        [monthlyEmissions]
+        [rollingLabels, rollingUserData]
     );
 
-    const chartOptions = {
+    const userLineChartOptions = {
         responsive: true,
         plugins: {
-            legend: {
-                position: "top" as const,
-            },
-            title: {
-                display: true,
-                text: `CoSMIC Emissions — ${TARGET_YEAR}`,
-            },
+            legend: { position: "top" as const },
+            title: { display: true, text: "Your Emissions Trend" },
             tooltip: {
                 callbacks: {
                     label: (context: any) => {
                         const value = context.raw;
                         return value === null
                             ? "No data"
-                            : `${value.toFixed(8)} kg CO₂`;
+                            : `${Number(value).toFixed(8)} kg CO₂`;
                     },
                 },
             },
@@ -167,10 +201,48 @@ export default function DashboardPage() {
         scales: {
             y: {
                 beginAtZero: true,
-                title: {
-                    display: true,
-                    text: "kg CO₂",
+                title: { display: true, text: "kg CO₂" },
+            },
+        },
+    };
+
+    // bar chart and memo declaration
+    const yearlyEmissions = useMemo(() => buildYearlyEmissions(allRows), [allRows]);
+
+    const yearlyBarChartData = useMemo(
+        () => ({
+            labels: MONTH_LABELS,
+            datasets: [
+                {
+                    label: `Total Emissions (kg CO₂) — ${TARGET_YEAR}`,
+                    data: yearlyEmissions,
+                    backgroundColor: "rgba(53, 162, 235, 0.6)",
+                    borderRadius: 4,
                 },
+            ],
+        }),
+        [yearlyEmissions]
+    );
+
+    const yearlyBarChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: "top" as const },
+            title: { display: true, text: `CoSMIC Emissions — ${TARGET_YEAR}` },
+            tooltip: {
+                callbacks: {
+                    label: (context: any) => {
+                        const value = context.raw;
+                        return value === null ? "No data" : `${value.toFixed(8)} kg CO₂`;
+                    },
+                },
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: { display: true, text: "kg CO₂" },
             },
         },
     };
@@ -183,9 +255,8 @@ export default function DashboardPage() {
         <div>
             <h1>Dashboard</h1>
 
-            {/* ── KPI ROW ───────────────────────────────────── */}
+            {/* {dashboard top stats } */}
             <div className="flex gap-4 mb-6">
-
                 <div className="flex-1 bg-gray-100 p-4 rounded-xl">
                     <p>Total Emissions</p>
                     <h2>{totalUserEmissions.toFixed(8)}</h2>
@@ -205,36 +276,53 @@ export default function DashboardPage() {
                     <p>Token Usage</p>
                     <h2>{totalTokenUsage}</h2>
                 </div>
-
             </div>
 
-            {/* ── USER SECTION ───────────────────────────── */}
+            {/* user section stats */}
             <section>
-                <h2>Your Emissions</h2>
+                {/* <h2>Your Emissions</h2>
 
                 {!userEmissions || userEmissions.count === 0 ? (
                     <p>No emissions data for this user yet.</p>
                 ) : (
-                    <>
-                        <p>Total records: {userEmissions.count}</p>
+                    <p>Total records: {userEmissions.count}</p>
+                )} */}
 
-                        <ul>
-                            {userRows.map((row) => (
-                                <li key={row.id}>
-                                    {/* <pre>{JSON.stringify(row, null, 2)}</pre> */}
-                                </li>
-                            ))}
-                        </ul>
-                    </>
-                )}
+                <div className="flex gap-2 mb-4 mt-2">
+                    {RANGE_OPTIONS.map((val) => (
+                        <button
+                            key={val}
+                            onClick={() => setRange(val)}
+                            className={`px-3 py-1 rounded ${
+                                range === val ? "bg-blue-500 text-white" : "bg-gray-200"
+                            }`}
+                        >
+                            {val === 12 ? "1Y" : `${val}M`}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex gap-2 mb-4 mt-2">
+
+                <div className=" w-2/3 h-[330px] bg-white p-4 rounded-xl border">
+                    <Line  options={userLineChartOptions} data={userLineChartData} />
+                </div>
+
+                {/* sample token usage chart below  */}
+
+                <div className=" w-2/3 h-[330px] bg-white p-4 rounded-xl border">
+                    <Line  options={userLineChartOptions} data={userLineChartData} />
+                </div>
+
+                
+                </div>
             </section>
 
-            {/* Month-wise chart */}
-            <section>
+            {/* bar chart stats global */}
+            <section className="mt-8">
 
-                {/* ── Month-wise chart ──────────────────────── */}
-                <div className="mt-6 bg-white p-4 rounded-xl border border-gray-200">
-                    <Bar options={chartOptions} data={chartData} />
+                <div className="w-full bg-white p-4 rounded-xl border h-[340px] overflow-hidden">
+                    <Bar options={yearlyBarChartOptions} data={yearlyBarChartData} />
                 </div>
             </section>
         </div>
