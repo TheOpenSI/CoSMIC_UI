@@ -84,7 +84,10 @@ export default function ChatHistoryPanel() {
                     {chat.name}
                   </span>
                   <p className="text-xs text-gray-400 truncate mt-0.5">
-                    {chat.details?.[0]?.user_query ?? ""}
+                    {(chat.details?.[0]?.user_query ?? "").replace(
+                      /^<files>.*?<\/files>/,
+                      "",
+                    )}
                   </p>
                 </div>
 

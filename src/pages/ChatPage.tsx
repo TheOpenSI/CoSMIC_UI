@@ -1,5 +1,5 @@
 import { Button, Input, Spin } from "antd";
-import { CirclePause, Orbit, Paperclip, Send, X } from "lucide-react";
+import { CirclePause, Orbit, Paperclip, FileText, Send, X } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
@@ -82,7 +82,12 @@ export default function ChatPage() {
 
     const updatedHistory: Message[] = [
       ...messages,
-      { id: uuidv4(), role: "user", content: userText },
+      {
+        id: uuidv4(),
+        role: "user",
+        content: userText,
+        fileName: pendingFile?.name,
+      },
     ];
 
     setMessages(chatKey, updatedHistory);
@@ -231,8 +236,18 @@ export default function ChatPage() {
                           <div className="bg-[#E6E7EB] rounded-full p-2 mt-1">
                             <BsPersonFill color="#6B7281" size={20} />
                           </div>
-                          <div className="mt-1 bg-[#0079FF] text-white px-4 py-2 rounded-2xl text-sm max-w-172">
-                            {msg.content}
+                          <div className="flex flex-col items-start gap-1">
+                            {msg.fileName && (
+                              <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700 shadow-sm">
+                                <FileText  size={12} />
+                                <span className="max-w-60 truncate">
+                                  {msg.fileName}
+                                </span>
+                              </div>
+                            )}
+                            <div className="mt-1 bg-[#0079FF] text-white px-4 py-2 rounded-2xl text-sm max-w-172">
+                              {msg.content}
+                            </div>
                           </div>
                         </div>
                       ) : (
