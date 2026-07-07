@@ -289,7 +289,7 @@ export default function DashboardPage() {
                 <div className="flex-1 bg-gray-100 p-4 rounded-xl">
                     <p className="text-sm text-gray-500">Token Usage</p>
                     <h2 className="text-xl font-bold">{totalTokenUsage > 0 ? totalTokenUsage : "—"}</h2>
-                    <p className="text-xs text-gray-400">placeholder</p>
+                    <p className="text-xs text-gray-400">total tokens used</p>
                 </div>
 
             </div>
@@ -334,13 +334,11 @@ export default function DashboardPage() {
 
                     {/* Token usage chart (placeholder) */}
                     <div className="w-1/2 h-[330px] bg-white p-4 rounded-xl border relative">
-                        {userLineChartData.datasets[0].data.some((val) => val !== null && val !== 0) ? (
-                            <Line options={userLineChartOptions} data={userLineChartData} />
-                        ) : (
+                       
                             <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-medium">
                                 N/A — No data available
                             </div>
-                        )}
+                        
 
                        
                     </div>
