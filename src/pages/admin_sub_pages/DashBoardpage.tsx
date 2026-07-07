@@ -247,6 +247,14 @@ export default function DashboardPage() {
         },
     };
 
+    // user readable foramat conversion of emissions to mg 
+
+    function formatEmissionsKg(kg: number): string {
+    if (kg === 0) return "0 mg";
+    const mg = kg * 1_000_000;
+    return `${mg.toFixed(3)} mg`;
+}
+
     if (loading) {
         return <p>Loading dashboard...</p>;
     }
@@ -257,25 +265,33 @@ export default function DashboardPage() {
 
             {/* {dashboard top stats } */}
             <div className="flex gap-4 mb-6">
+
                 <div className="flex-1 bg-gray-100 p-4 rounded-xl">
-                    <p>Total Emissions</p>
-                    <h2>{totalUserEmissions.toFixed(8)}</h2>
+                    <p className="text-sm text-gray-500">Your Total Emissions</p>
+                    <h2 className="text-xl font-bold">{ formatEmissionsKg(totalUserEmissions) }</h2>
+                    <p className="text-xs text-gray-400">{ totalUserEmissions > 0  ? `${totalUserEmissions.toExponential(2)} kg CO₂` : "—" }</p>
                 </div>
 
                 <div className="flex-1 bg-gray-100 p-4 rounded-xl">
-                    <p>CPU Power</p>
-                    <h2>{totalUserCpu.toFixed(2)}</h2>
+                    <p className="text-sm text-gray-500">CPU Power</p>
+                    <h2 className="text-xl font-bold">{  totalUserCpu > 0 ? `${totalUserCpu.toFixed(2)} W` : "—" } </h2>
+                    <p className="text-xs text-gray-400">total watts used</p>
                 </div>
 
                 <div className="flex-1 bg-gray-100 p-4 rounded-xl">
-                    <p>GPU Power</p>
-                    <h2>{totalUserGpu.toFixed(2)}</h2>
+                    <p className="text-sm text-gray-500">GPU Power</p>
+                    <h2 className="text-xl font-bold">
+                        {totalUserGpu > 0 ? `${totalUserGpu.toFixed(2)} W` : "—"}
+                    </h2>
+                    <p className="text-xs text-gray-400">total watts used</p>
                 </div>
 
                 <div className="flex-1 bg-gray-100 p-4 rounded-xl">
-                    <p>Token Usage</p>
-                    <h2>{totalTokenUsage}</h2>
+                    <p className="text-sm text-gray-500">Token Usage</p>
+                    <h2 className="text-xl font-bold">{totalTokenUsage > 0 ? totalTokenUsage : "—"}</h2>
+                    <p className="text-xs text-gray-400">placeholder</p>
                 </div>
+
             </div>
 
             {/* user section stats */}
@@ -302,28 +318,48 @@ export default function DashboardPage() {
                     ))}
                 </div>
 
-                <div className="flex gap-2 mb-4 mt-2">
-
-                <div className=" w-2/3 h-[330px] bg-white p-4 rounded-xl border">
-                    <Line  options={userLineChartOptions} data={userLineChartData} />
-                </div>
-
-                {/* sample token usage chart below  */}
-
-                <div className=" w-2/3 h-[330px] bg-white p-4 rounded-xl border">
-                    <Line  options={userLineChartOptions} data={userLineChartData} />
-                </div>
-
                 
+                <div className="flex gap-4">
+    
+                    {/* User emissions line chart */}
+                    <div className="w-1/2 h-[330px] bg-white p-4 rounded-xl border relative">
+                        {userLineChartData.datasets[0].data.some((val) => val !== null && val !== 0) ? (
+                            <Line options={userLineChartOptions} data={userLineChartData} />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-medium">
+                                N/A — No data available
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Token usage chart (placeholder) */}
+                    <div className="w-1/2 h-[330px] bg-white p-4 rounded-xl border relative">
+                        {userLineChartData.datasets[0].data.some((val) => val !== null && val !== 0) ? (
+                            <Line options={userLineChartOptions} data={userLineChartData} />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-medium">
+                                N/A — No data available
+                            </div>
+                        )}
+
+                       
+                    </div>
+
                 </div>
             </section>
 
             {/* bar chart stats global */}
             <section className="mt-8">
 
-                <div className="w-full bg-white p-4 rounded-xl border h-[340px] overflow-hidden">
-                    <Bar options={yearlyBarChartOptions} data={yearlyBarChartData} />
-                </div>
+                    <div className="w-full bg-white p-4 rounded-xl border h-[340px] overflow-hidden">
+                        {yearlyBarChartData.datasets[0].data.some((val) => val !== null) ? (
+                        <Bar options={yearlyBarChartOptions} data={yearlyBarChartData} />
+                        ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-medium">
+                             N/A — No data available
+                        </div>
+                        )}
+                    </div>
             </section>
         </div>
     );
