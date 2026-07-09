@@ -50,6 +50,8 @@ const RANGE_OPTIONS: RangeOption[] = [3, 6, 12];
 
 export default function DashboardPage() {
     const selectedUser = useUserStore((state) => state.selectedUser);
+    const users = useUserStore((state) => state.users);
+    const usersError = useUserStore((state) => state.error);
     const [monthlyStats, setMonthlyStats] = useState<MonthlyEmissionsStatsResponse | null>(null);
     const [userSummary, setUserSummary] = useState<UserEmissionsSummaryResponse | null>(null);
     const [userRolling, setUserRolling] = useState<UserEmissionsRollingResponse | null>(null);
@@ -59,27 +61,49 @@ export default function DashboardPage() {
     const skipRangeFetch = useRef(true);
 
     useEffect(() => {
+        const usersStillLoading = !selectedUser && users.length === 0 && !usersError;
+
+        if (usersStillLoading) {
+            setLoading(true);
+            return;
+        }
+
         const fetchDashboard = async (): Promise<void> => {
             setLoading(true);
 
-            const [statsRes, summaryRes, rollingRes] = await Promise.all([
-                getMonthlyEmissionsStats(),
-                getUserEmissionsSummary(),
-                getUserRollingStats(range),
-            ]);
+            try {
+                if (!selectedUser) {
+                    const statsRes = await getMonthlyEmissionsStats();
+                    setMonthlyStats(statsRes);
+                    setUserSummary(null);
+                    setUserRolling(null);
+                    return;
+                }
 
-            setMonthlyStats(statsRes);
-            setUserSummary(summaryRes);
-            setUserRolling(rollingRes);
-            setLoading(false);
+                const [statsRes, summaryRes, rollingRes] = await Promise.all([
+                    getMonthlyEmissionsStats(),
+                    getUserEmissionsSummary(),
+                    getUserRollingStats(range),
+                ]);
+
+                setMonthlyStats(statsRes);
+                setUserSummary(summaryRes);
+                setUserRolling(rollingRes);
+            } finally {
+                setLoading(false);
+            }
         };
 
         fetchDashboard();
-    }, [selectedUser?.id]);
+    }, [selectedUser?.id, users.length, usersError]);
 
     useEffect(() => {
         if (skipRangeFetch.current) {
             skipRangeFetch.current = false;
+            return;
+        }
+
+        if (!selectedUser) {
             return;
         }
 
@@ -95,7 +119,7 @@ export default function DashboardPage() {
         };
 
         fetchRolling();
-    }, [range]);
+    }, [range, selectedUser?.id]);
 
     const chartYear = monthlyStats?.year ?? new Date().getFullYear();
     const monthlyTotals = monthlyStats?.monthly_totals ?? [];
