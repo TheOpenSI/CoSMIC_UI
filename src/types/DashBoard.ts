@@ -42,3 +42,9 @@ export interface AllEmissionsResponse {
   count: number;
   result: Emission[];
 }
+
+export interface MonthlyEmissionsStatsResponse {
+  success: boolean;
+  year: number;
+  monthly_totals: (number | null)[];
+}
