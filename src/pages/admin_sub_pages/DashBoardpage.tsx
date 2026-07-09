@@ -14,10 +14,14 @@ import {
 import { Bar, Line } from "react-chartjs-2";
 
 /// --- Type hints --- ///
-import type { AllEmissionsResponse, Emission } from "../../types/DashBoard";
+import type {
+    AllEmissionsResponse,
+    Emission,
+    MonthlyEmissionsStatsResponse,
+} from "../../types/DashBoard";
 
 /// --- Internal libraries --- ///
-import { getUserEmissions, getAllEmissions } from "../../api/DashBoard";
+import { getUserEmissions, getMonthlyEmissionsStats } from "../../api/DashBoard";
 
 //  chart js .
 ChartJS.register(
@@ -36,30 +40,9 @@ const MONTH_LABELS: string[] = [
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-const TARGET_YEAR: number = new Date().getFullYear();
-
 type RangeOption = 3 | 6 | 12;
 const RANGE_OPTIONS: RangeOption[] = [3, 6, 12];  // options for user to select rolling window for trend chart
 
-// build yearly emissions for the bar chart, with null for months with no data
-function buildYearlyEmissions(rows: Emission[]): (number | null)[] {
-    const monthlyTotals: number[] = new Array(12).fill(0);
-    const monthlyHasData: boolean[] = new Array(12).fill(false);
-
-    for (const row of rows) {
-        const date = new Date(row.timestamp);
-
-        if (date.getFullYear() !== TARGET_YEAR) {
-            continue; // skiping data which is not in the target year
-        }
-
-        const monthIndex = date.getMonth();
-        monthlyTotals[monthIndex] += row.emissions ?? 0;
-        monthlyHasData[monthIndex] = true;
-    }
-
-    return monthlyTotals.map((total, i) => (monthlyHasData[i] ? total : null));
-}
 // build monthly totals keyed by year-month for the rolling trend line chart with emissions data, e.g. { "2026-3": 12.34, "2026-4": 56.78 }
 function buildMonthlyTotalsByYearMonth(rows: Emission[]): Map<string, number> {
     const totals = new Map<string, number>();
@@ -110,7 +93,7 @@ function getRollingSeries(
 
 export default function DashboardPage() {
     const [userEmissions, setUserEmissions] = useState<AllEmissionsResponse | null>(null);
-    const [allEmissions, setAllEmissions] = useState<AllEmissionsResponse | null>(null);
+    const [monthlyStats, setMonthlyStats] = useState<MonthlyEmissionsStatsResponse | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [range, setRange] = useState<RangeOption>(3);
 
@@ -118,22 +101,22 @@ export default function DashboardPage() {
         const fetchData = async (): Promise<void> => {
             setLoading(true);
 
-            const [userRes, allRes] = await Promise.all([
+            const [userRes, statsRes] = await Promise.all([
                 getUserEmissions(),
-                getAllEmissions(),
+                getMonthlyEmissionsStats(),
             ]);
 
             setUserEmissions(userRes);
-            setAllEmissions(allRes);
+            setMonthlyStats(statsRes);
             setLoading(false);
         };
 
         fetchData();
     }, []);
 
-    // arrays or data for both all and user 
     const userRows = userEmissions?.result ?? [];
-    const allRows = allEmissions?.result ?? [];
+    const chartYear = monthlyStats?.year ?? new Date().getFullYear();
+    const monthlyTotals = monthlyStats?.monthly_totals ?? [];
 
     // summary calculation for top boxes on dashboard page
     const totalUserEmissions = useMemo(
@@ -207,21 +190,19 @@ export default function DashboardPage() {
     };
 
     // bar chart and memo declaration
-    const yearlyEmissions = useMemo(() => buildYearlyEmissions(allRows), [allRows]);
-
     const yearlyBarChartData = useMemo(
         () => ({
             labels: MONTH_LABELS,
             datasets: [
                 {
-                    label: `Total Emissions (kg CO₂) — ${TARGET_YEAR}`,
-                    data: yearlyEmissions,
+                    label: `Total Emissions (kg CO₂) — ${chartYear}`,
+                    data: monthlyTotals,
                     backgroundColor: "rgba(53, 162, 235, 0.6)",
                     borderRadius: 4,
                 },
             ],
         }),
-        [yearlyEmissions]
+        [chartYear, monthlyTotals]
     );
 
     const yearlyBarChartOptions = {
@@ -229,7 +210,7 @@ export default function DashboardPage() {
         maintainAspectRatio: false,
         plugins: {
             legend: { position: "top" as const },
-            title: { display: true, text: `CoSMIC Emissions — ${TARGET_YEAR}` },
+            title: { display: true, text: `CoSMIC Emissions — ${chartYear}` },
             tooltip: {
                 callbacks: {
                     label: (context: any) => {

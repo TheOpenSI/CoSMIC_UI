@@ -3,7 +3,10 @@
 
 /// --- Type hints --- ///
 import { useUserStore } from "../stores/UserStore";
-import type { AllEmissionsResponse } from "../types/DashBoard";
+import type {
+  AllEmissionsResponse,
+  MonthlyEmissionsStatsResponse,
+} from "../types/DashBoard";
 
 
 /// --- Internal libraries --- ///
@@ -42,6 +45,16 @@ export async function getUserEmissions(): Promise<AllEmissionsResponse> {
  
   return fetchWithAuth(
     `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/emissions?${params.toString()}`,
+  );
+}
+
+/**
+ * Fetch aggregated monthly emissions totals for the current year (all users).
+ * Used by the global CoSMIC bar chart on the dashboard.
+ */
+export async function getMonthlyEmissionsStats(): Promise<MonthlyEmissionsStatsResponse> {
+  return fetchWithAuth(
+    `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/emissions/stats/monthly`,
   );
 }
 
