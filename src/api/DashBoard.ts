@@ -66,10 +66,8 @@ export async function getUserEmissionsSummary(): Promise<UserEmissionsSummaryRes
     };
   }
 
-  const params = new URLSearchParams({ user_id: selectedUser.id });
-
   return fetchWithAuth(
-    `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/emissions/stats/summary?${params.toString()}`,
+    `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/emissions/stats/${selectedUser.id}/summary`,
   );
 }
 
@@ -92,12 +90,11 @@ export async function getUserRollingStats(
   }
 
   const params = new URLSearchParams({
-    user_id: selectedUser.id,
     months: String(months),
   });
 
   return fetchWithAuth(
-    `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/emissions/stats/rolling?${params.toString()}`,
+    `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/emissions/stats/${selectedUser.id}/rolling?${params.toString()}`,
   );
 }
 
@@ -107,7 +104,7 @@ export async function getUserRollingStats(
  */
 export async function getMonthlyEmissionsStats(): Promise<MonthlyEmissionsStatsResponse> {
   return fetchWithAuth(
-    `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/emissions/stats/monthly`,
+    `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/emissions/stats`,
   );
 }
 
