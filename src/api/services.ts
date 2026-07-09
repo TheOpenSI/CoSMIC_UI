@@ -24,7 +24,7 @@ export async function updateService(
   serviceId: number,
   payload: {
     status: boolean;
-    memory_capability: boolean;
+    memory_capability?: boolean;
   },
 ): Promise<ServicePublic> {
   return fetchWithAuth(
