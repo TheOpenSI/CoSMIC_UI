@@ -48,3 +48,19 @@ export interface MonthlyEmissionsStatsResponse {
   year: number;
   monthly_totals: (number | null)[];
 }
+
+export interface UserEmissionsSummaryResponse {
+  success: boolean;
+  user_id: string;
+  total_emissions: number;
+  total_cpu_power: number;
+  total_gpu_power: number;
+}
+
+export interface UserEmissionsRollingResponse {
+  success: boolean;
+  user_id: string;
+  months: 3 | 6 | 12;
+  labels: string[];
+  totals: (number | null)[];
+}
