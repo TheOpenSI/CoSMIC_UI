@@ -48,6 +48,35 @@ const MONTH_LABELS: string[] = [
 type RangeOption = 3 | 6 | 12;
 const RANGE_OPTIONS: RangeOption[] = [3, 6, 12];
 
+function getNumericValues(values: (number | null)[]): number[] {
+    return values.filter((value): value is number => value !== null);
+}
+
+function buildEmissionsYAxisOptions(values: (number | null)[]) {
+    const numericValues = getNumericValues(values);
+    const maxValue = numericValues.length > 0 ? Math.max(...numericValues) : 0;
+
+    return {
+        beginAtZero: true,
+        grace: "25%",
+        title: { display: true, text: "kg CO₂" },
+        ticks: {
+            maxTicksLimit: 6,
+            callback(tickValue: string | number) {
+                const value = Number(tickValue);
+                if (value === 0) return "0";
+                if (Math.abs(value) < 0.0001) return value.toExponential(1);
+                if (Math.abs(value) < 0.01) return value.toFixed(4);
+                if (Math.abs(value) < 1) return value.toFixed(3);
+                return value.toFixed(2);
+            },
+        },
+        ...(maxValue > 0 && maxValue < 0.05
+            ? { suggestedMax: maxValue * 1.4 }
+            : {}),
+    };
+}
+
 export default function DashboardPage() {
     const selectedUser = useUserStore((state) => state.selectedUser);
     const users = useUserStore((state) => state.users);
@@ -149,32 +178,41 @@ export default function DashboardPage() {
         [rollingLabels, rollingUserData]
     );
 
-    const userLineChartOptions = {
-        responsive: true,
-        animation: {
-            duration: 400,
-        },
-        plugins: {
-            legend: { position: "top" as const },
-            title: { display: true, text: "Your Emissions Trend" },
-            tooltip: {
-                callbacks: {
-                    label: (context: any) => {
-                        const value = context.raw;
-                        return value === null
-                            ? "No data"
-                            : `${Number(value).toFixed(8)} kg CO₂`;
+    const userLineChartOptions = useMemo(
+        () => ({
+            responsive: true,
+            animation: {
+                duration: 400,
+            },
+            plugins: {
+                legend: { position: "top" as const },
+                title: { display: true, text: "Your Emissions Trend" },
+                tooltip: {
+                    callbacks: {
+                        label: (context: any) => {
+                            const value = context.raw;
+                            return value === null
+                                ? "No data"
+                                : `${Number(value).toFixed(8)} kg CO₂`;
+                        },
                     },
                 },
             },
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: { display: true, text: "kg CO₂" },
+            scales: {
+                y: buildEmissionsYAxisOptions(rollingUserData),
             },
-        },
-    };
+            elements: {
+                point: {
+                    radius: rollingUserData.filter((v) => v !== null).length <= 3 ? 6 : 3,
+                    hoverRadius: 8,
+                },
+                line: {
+                    borderWidth: 2,
+                },
+            },
+        }),
+        [rollingUserData]
+    );
 
     const yearlyBarChartData = useMemo(
         () => ({
@@ -185,34 +223,42 @@ export default function DashboardPage() {
                     data: monthlyTotals,
                     backgroundColor: "rgba(53, 162, 235, 0.6)",
                     borderRadius: 4,
+                    minBarLength: 8,
+                    maxBarThickness: 48,
                 },
             ],
         }),
         [chartYear, monthlyTotals]
     );
 
-    const yearlyBarChartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: "top" as const },
-            title: { display: true, text: `CoSMIC Emissions — ${chartYear}` },
-            tooltip: {
-                callbacks: {
-                    label: (context: any) => {
-                        const value = context.raw;
-                        return value === null ? "No data" : `${value.toFixed(8)} kg CO₂`;
+    const yearlyBarChartOptions = useMemo(
+        () => ({
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: "top" as const },
+                title: { display: true, text: `CoSMIC Emissions — ${chartYear}` },
+                tooltip: {
+                    callbacks: {
+                        label: (context: any) => {
+                            const value = context.raw;
+                            return value === null ? "No data" : `${value.toFixed(8)} kg CO₂`;
+                        },
                     },
                 },
             },
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: { display: true, text: "kg CO₂" },
+            scales: {
+                x: {
+                    ticks: {
+                        maxRotation: 0,
+                        autoSkip: false,
+                    },
+                },
+                y: buildEmissionsYAxisOptions(monthlyTotals),
             },
-        },
-    };
+        }),
+        [chartYear, monthlyTotals]
+    );
 
     function formatEmissionsKg(kg: number): string {
         if (kg === 0) return "0 mg";
@@ -306,7 +352,7 @@ export default function DashboardPage() {
 
             <section className="mt-8">
                 <div className="w-full bg-white p-4 rounded-xl border h-[340px] overflow-hidden">
-                    {yearlyBarChartData.datasets[0].data.some((val) => val !== null) ? (
+                    {monthlyTotals.some((val) => val !== null) ? (
                         <Bar options={yearlyBarChartOptions} data={yearlyBarChartData} />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-medium">
