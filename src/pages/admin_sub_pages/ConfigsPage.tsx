@@ -260,6 +260,7 @@ export default function ConfigsPage() {
                                         with no RAG capability. However, we should
                                         have a new design that allows users to
                                         toggle this option for each service.
+                                        Note: I dont think we should allow users to toggle Mem Cap 
                                     */}
                                     <Switch
                                         defaultChecked={service.status}
@@ -269,7 +270,6 @@ export default function ConfigsPage() {
                                                     service.id,
                                                     {
                                                         status: checked,
-                                                        memory_capability: false,
                                                     }
                                                 );
 

@@ -2,6 +2,7 @@ export type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  fileName?: string;  // Attached filename shown as a chip above the user bubble
 };
 export type OneChatSessionResponse = {
   success: boolean;
