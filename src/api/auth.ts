@@ -19,7 +19,7 @@ export function getLoginUrl(): string {
 /** Keycloak self-registration page (realm must have registrationAllowed: true) */
 export function getRegisterUrl(): string {
   const params = new URLSearchParams({
-    client_id: "cosmic-bff",
+    client_id: "cosmic-fastapi-keycloak",
     redirect_uri: `${BFF_BASE_URL}${AUTH_API_PREFIX}/callback`,
     response_type: "code",
     scope: "openid profile email",
