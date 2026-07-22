@@ -15,16 +15,11 @@ export default function LoginPage() {
     void checkSession();
   }, [checkSession]);
 
-  // Already logged in → skip login page
   useEffect(() => {
     if (!loading && user) {
       navigate("/chat", { replace: true });
     }
   }, [loading, user, navigate]);
-
-  const handleSignIn = () => {
-    window.location.href = getLoginUrl();
-  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start pt-14 bg-white px-4">
@@ -43,8 +38,8 @@ export default function LoginPage() {
         ) : null}
 
         <Text type="secondary">
-          Sign in with your CoSMIC account. You will be redirected to our
-          identity provider to enter your email and password securely.
+          Choose how you want to sign in. You will be redirected to the
+          identity provider securely.
         </Text>
 
         <Button
@@ -52,14 +47,31 @@ export default function LoginPage() {
           size="large"
           className="w-full h-12"
           loading={loading}
-          onClick={handleSignIn}
+          onClick={() => {
+            window.location.href = getLoginUrl("keycloak");
+          }}
         >
-          Sign in
+          Sign in with Keycloak
         </Button>
 
-        <div className="flex flex-col items-center gap-2 pt-2">
-          <Link href={getRegisterUrl()}>Don&apos;t have an account? Sign up</Link>
-        </div>
+        <Button
+          size="large"
+          className="w-full h-12"
+          loading={loading}
+          onClick={() => {
+            window.location.href = getLoginUrl("google");
+          }}
+        >
+          Continue with Google
+        </Button>
+
+        {/* as of now no register option for users is available */}
+
+        {/* <div className="flex flex-col items-center gap-2 pt-2">
+          <Link href={getRegisterUrl()}>
+            Don&apos;t have an account? Sign up (Keycloak)
+          </Link>
+        </div> */}
       </div>
     </div>
   );
