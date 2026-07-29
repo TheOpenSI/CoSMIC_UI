@@ -51,7 +51,7 @@ export default function LoginPage() {
             window.location.href = getLoginUrl("keycloak");
           }}
         >
-          Sign in with Keycloak
+          Log in / Sign up with Keycloak
         </Button>
 
         <Button
