@@ -6,7 +6,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { useNavigate, useParams } from "react-router-dom";
 import { message } from "antd";
 
-import { deleteChatSession, getAllChatSessions } from "../../api/chat";
+import {  deleteChatSession, getAllChatSessions, sendOneDeletedChatSession } from "../../api/chat";
 import { useUserStore } from "../../stores/UserStore";
 import { useChatStore } from "../../stores/ChatStore";
 
@@ -30,18 +30,27 @@ export default function ChatHistoryPanel() {
     .filter((chat) => chat.user_id === selectedUser?.id)
     .sort((a, b) => dayjs(b.create_on).unix() - dayjs(a.create_on).unix());
 
-  console.log(sortedChats);
+  // console.log(sortedChats);
 
-  const { mutate: handleDeleteChat } = useMutation({
-    mutationFn: (chatID: string) => deleteChatSession(chatID),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["allUsersAndChatSessions"] });
-      // TO DO: when delete the current chat go back to new
-    },
-    onError: (error) => {
-      message.error(error.message);
-    },
-  });
+const { mutate: handleDeleteChat } = useMutation({
+  mutationFn: async (chatID: string) => {
+    if (!selectedUser?.id) return;
+
+    try {
+      await sendOneDeletedChatSession(chatID, selectedUser.id)} 
+    catch (err) {
+      console.error("Failed to log chat session before delete!", err);
+    }
+    await deleteChatSession(chatID);
+  },
+
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["allUsersAndChatSessions"] });
+  },
+  onError: (error) => {
+    message.error(error.message);
+  },
+});
 
   const handleNewChat = () => {
     // Clear the transient "new" bucket so the screen resets even when we are already on /chat 

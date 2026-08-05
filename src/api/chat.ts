@@ -87,6 +87,15 @@ export async function deleteChatSession(chatID: string): Promise<void> {
     );
 }
 
+export async function sendOneDeletedChatSession(chat_id: string,user_id: string) {
+  return fetchWithAuth(
+    `${import.meta.env.VITE_API_BASE_URL}/api/v1/memory/session/delete`,
+    {
+      method: "POST",
+      body: JSON.stringify({ chat_id, user_id }),
+    },
+  );
+}
 
 export async function createChatSession(
     title: string,
