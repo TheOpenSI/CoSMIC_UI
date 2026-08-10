@@ -1,13 +1,15 @@
-export type ServiceEnable = {
-  id: number;
-  name: string;
-  desc: string;
-  create_on: string;
-  status: boolean;
+export type ServicePublic = {
+    id: number;
+    name: string;
+    desc: string;
+    status: boolean;
+    memory_capability: boolean;
+    create_on: string;
 };
 
-export type AllServicesResponse = {
-  success: boolean;
-  count: number;
-  result: ServiceEnable[];
+
+export type ServicesPublic = {
+    success: boolean;
+    count: number;
+    result: ServicePublic[];
 };

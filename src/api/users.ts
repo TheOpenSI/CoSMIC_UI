@@ -1,5 +1,14 @@
+/// --- Core libraries --- ///
+
+
+/// --- Type hints --- ///
 import type { AllUsersResponse } from "../types/users";
+
+
+/// --- Internal libraries --- ///
 import { fetchWithAuth } from "./fetchWithAuth";
+
+
 
 export async function getAllUsers(): Promise<AllUsersResponse> {
   return fetchWithAuth(`${import.meta.env.VITE_API_DATABASE_URL}/api/v1/users`);

@@ -2,6 +2,7 @@ export type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  fileName?: string;  // Attached filename shown as a chip above the user bubble
 };
 export type OneChatSessionResponse = {
   success: boolean;
@@ -20,16 +21,6 @@ export type Chat = {
   name: string;
   details: ChatDetail[];
   create_on: string;
-  user: ChatUser;
-};
-
-export type ChatUser = {
-  id: string;
-  role_id: string;
-  name: string;
-  email: string | null;
-  create_on: string;
-  role: UserRole;
 };
 
 export type ChatDetail = {

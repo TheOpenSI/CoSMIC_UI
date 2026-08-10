@@ -13,7 +13,16 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
         //   Authorization: `Bearer ${token}`,
       },
     });
-    if (!response.ok) throw new Error("Request failed");
+    if (!response.ok) {
+      let detail = `Request failed (HTTP ${response.status})`;
+      try {
+        const body = await response.json();
+        detail = body?.detail || body?.message || detail;
+      } catch {
+        // response had no JSON body; keep the status-based message
+      }
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    }
     return await response.json();
   } catch (error) {
     console.error(error);
