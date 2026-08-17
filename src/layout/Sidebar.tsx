@@ -1,12 +1,14 @@
 import {
   ArrowRightToLine,
   CircleFadingPlus,
-  // Undo2,
+  LogOut,
   UserRound,
 } from "lucide-react";
 import { useSidebarStore } from "../stores/SidebarStore";
 import { useChatStore } from "../stores/ChatStore";
 import { useNavigate, useParams } from "react-router-dom";
+import { logout } from "../api/auth";
+import { Dropdown } from "antd";
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -178,12 +180,28 @@ export default function Sidebar() {
             )}
           </button>
         </div>
-        <button
-          onClick={(e) => e.stopPropagation()}
-          className={`${isOpen ? "p-3.5" : "p-2"} flex items-center justify-center rounded-xl bg-gray-300 cursor-pointer hover:bg-gray-400`}
-        >
-          <UserRound color="#545A6A" size={18} />
-        </button>
+ <Dropdown
+  trigger={["click"]}
+  placement="topRight"
+  menu={{
+    items: [
+      {
+        key: "logout",
+        label: "Log out",
+        icon: <LogOut size={16} />,
+        danger: true,
+        onClick: () => logout(),
+      },
+    ],
+  }}
+>
+  <button
+    onClick={(e) => e.stopPropagation()}
+    className={`${isOpen ? "p-3.5" : "p-2"} flex items-center justify-center rounded-xl bg-gray-300 cursor-pointer hover:bg-gray-400`}
+  >
+    <UserRound color="#545A6A" size={18} />
+  </button>
+</Dropdown>
       </div>
     </div>
   );
