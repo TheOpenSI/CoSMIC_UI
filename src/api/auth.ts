@@ -4,7 +4,7 @@ const KEYCLOAK_PUBLIC_URL =
 const KEYCLOAK_REALM = import.meta.env.VITE_KEYCLOAK_REALM ?? "cosmic";
 const AUTH_API_PREFIX = "/api/v1/auth";
 
-export type AuthProvider = "keycloak" | "google";
+export type AuthProvider = "keycloak" | "google" | "azure";
 
 export type AuthUser = {
   sub: string;

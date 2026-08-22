@@ -65,6 +65,18 @@ export default function LoginPage() {
           Continue with Google
         </Button>
 
+        <Button
+            size="large"
+            className="w-full h-12"
+            loading={loading}
+            onClick={() => { window.location.href = getLoginUrl("azure"); 
+
+            }}
+          >
+            Sign in with Microsoft
+        </Button>
+
+
         {/* as of now no register option for users is available */}
 
         {/* <div className="flex flex-col items-center gap-2 pt-2">
