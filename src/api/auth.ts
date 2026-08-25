@@ -7,6 +7,7 @@ const AUTH_API_PREFIX = "/api/v1/auth";
 export type AuthProvider = "keycloak" | "google";
 
 export type AuthUser = {
+  user_id? : string;
   sub: string;
   email?: string;
   name?: string;
