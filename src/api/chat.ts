@@ -1,4 +1,5 @@
 /// --- Core libraries --- ///
+import { v7 as uuidv7 } from "uuid";
 
 
 /// --- Type hints --- ///
@@ -32,13 +33,14 @@ export async function sendMessage(
     // NOTE:
     // Example payload in YAML style:
     //
-    // user_message: "<user query>",
-    //     body:
-    //         user:
-    //             id: "<user UUID (version 7)>",
-    //             role: "<user role>",
-    //             email: "<user email>"
-    //     messages: []
+    //	user_message: "<user query>",
+    //		body:
+    //			user:
+    //				id: "<user UUID (version 7)>",
+    //				role: "<user role>",
+    //				email: "<user email>",
+	//				inquiry_cycle_id: "<inquiry cycle UUID (version 7)>"
+    //			messages: []
     const res = await fetchWithAuth(
         `${import.meta.env.VITE_API_BASE_URL}/api/v1/cosmic`,
         {
@@ -51,8 +53,13 @@ export async function sendMessage(
                 body: {
                     user: {
                         id: selectedUser?.id,
-                        role: selectedUserRole,
+						role: selectedUserRole,
                         email: selectedUser?.email,
+						// TODO:
+						// this's temporary solution. Once starting on the PR that unified one
+						// payload format only (right now it's 2), this will get modify (the whole
+						// thing, not just this field)
+						inquiry_cycle_id: uuidv7(),
                     },
                     messages: chatHistory,
                 }
