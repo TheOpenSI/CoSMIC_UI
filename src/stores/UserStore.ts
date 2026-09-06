@@ -8,8 +8,14 @@ import type { Role } from "../types/roles";
 
 
 /// --- Internal libraries --- ///
-import { getAllUsers } from "../api/users";
+import { getAllUsers} from "../api/users";
 import { getAllRoles } from "../api/roles";
+import { getCurrentUser } from "../api/auth";
+
+
+//  only for now as we are still in dev mode , this will be removed later for auth purposes
+const DEV_FALLBACK_FIRST_USER = true;
+
 
 
 
@@ -44,10 +50,12 @@ export const useUserStore = create<UserStore>(
             try {
                 const [
                     userResponse,
-                    roleResponse
+                    roleResponse,
+                    me
                 ] = await Promise.all([
                     getAllUsers(),
-                    getAllRoles()
+                    getAllRoles(), 
+                    getCurrentUser()
                 ]);
 
                 // NOTE:
@@ -59,15 +67,28 @@ export const useUserStore = create<UserStore>(
                 // However, when we start implementing AuthN and AuthZ, this
                 // logic will need to be updated to grab data from logged user
                 // based on a certain "thing" (e.g., cookie, session, etc)
-                const firstUserData: User | null = userResponse.result[0] ?? null;
-                const firstUserRole: string | null = firstUserData
-                    ? (roleResponse.result.find((role) => role.id === firstUserData.role_id)?.name ?? null)
-                    : null;
+                const roles = roleResponse.result;
+                const users = userResponse.result;
 
+                let selected: User | null = null;
+                if (me?.user_id) {
+                    selected = users.find((u) => u.id === me.user_id) ?? null;
+                    // optional: if not in list, fetch one user
+                    // if (!selected) selected = (await getUser(me.user_id)).result;
+                } else if (DEV_FALLBACK_FIRST_USER) {
+                    selected = users[0] ?? null; // temporary
+                }
+                const selectedUserRole = selected
+                    ? (roles.find((r) => r.id === selected!.role_id)?.name ??
+                    me?.roles?.[0] ??
+                    null)
+                    : null;
+                
                 set({
-                    users: userResponse.result,
-                    selectedUser: firstUserData,
-                    selectedUserRole: firstUserRole
+                    users,
+                    roles,
+                    selectedUser: selected,
+                    selectedUserRole,
                 });
 
             } catch (err) {
@@ -79,14 +100,13 @@ export const useUserStore = create<UserStore>(
         // NOTE:
         // We put user data into React `useState()` (similar concepts with FastAPI
         // `State()`) after fetching from both APIs here
-        setSelectedUser: (user: User) => {
-            const { roles }: UserStore = get();
-            const role: string | null = (roles.find((role) => role.id === user.role_id)?.name ?? null);
-
+        setSelectedUser: (user) => {
+            const { roles } = get();
             set({
-                selectedUser: user,
-                selectedUserRole: role
-            })
-        },
+              selectedUser: user,
+              selectedUserRole:
+                roles.find((r) => r.id === user.role_id)?.name ?? null,
+            });
+          },
     })
 );
