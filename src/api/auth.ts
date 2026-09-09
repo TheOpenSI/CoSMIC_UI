@@ -31,13 +31,27 @@ export function getRegisterUrl(): string {
   return `${KEYCLOAK_PUBLIC_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/registrations?${params}`;
 }
 
-export async function getCurrentUser(): Promise<AuthUser | null> {
-  const response = await fetch(`${BFF_BASE_URL}${AUTH_API_PREFIX}/me`, {
+export async function refreshSession(): Promise<boolean> {
+  const response = await fetch(`${BFF_BASE_URL}${AUTH_API_PREFIX}/refresh`, {
+    method: "POST",
     credentials: "include",
   });
+  return response.ok;
+}
+
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  const me = () =>
+    fetch(`${BFF_BASE_URL}${AUTH_API_PREFIX}/me`, {
+      credentials: "include",
+    });
+
+  let response = await me();
 
   if (response.status === 401) {
-    return null;
+    const refreshed = await refreshSession();
+    if (!refreshed) return null;
+    response = await me();
+    if (response.status === 401) return null;
   }
 
   if (!response.ok) {

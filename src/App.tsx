@@ -38,7 +38,7 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           {/* Protected — must be logged in */}
-          {/* <Route element={<RequireAuth />}> */}
+          <Route element={<RequireAuth />}>
             <Route element={<MainLayout />}>
               <Route index element={<Navigate to="/chat" replace />} />
               <Route path="/chat" element={<ChatPage />} />
@@ -51,7 +51,7 @@ export default function App() {
                 <Route path="dashboard" element={<DashboardPage />} />
               </Route>
             </Route>
-          {/* </Route> */}
+          </Route>
         </Routes>
     </BrowserRouter>
   );
