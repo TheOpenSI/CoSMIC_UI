@@ -1,4 +1,4 @@
-import { Button, Input, Spin } from "antd";
+import { Button, Input, Spin, Upload } from "antd";
 import { CirclePause, Orbit, Paperclip, FileText, Send, X } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { BsPersonFill } from "react-icons/bs";
@@ -24,8 +24,7 @@ const { TextArea } = Input;
 
 export default function ChatPage() {
   const [message, setMessage] = useState("");
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { chatID } = useParams();
   const navigate = useNavigate();
@@ -86,7 +85,9 @@ export default function ChatPage() {
         id: uuidv4(),
         role: "user",
         content: userText,
-        fileName: pendingFile?.name,
+        fileName: pendingFiles.length
+          ? pendingFiles.map((f) => f.name).join(", ")
+          : undefined,
       },
     ];
 
@@ -95,7 +96,7 @@ export default function ChatPage() {
     setLoading(chatKey, true);
     setOptimisticTitle(chatKey, userText.slice(0, 40));
 
-    // Track a session to roll back if the upload/send fails 
+    // Track a session to roll back if the upload/send fails
     let createdSessionId: string | null = null;
 
     try {
@@ -109,23 +110,30 @@ export default function ChatPage() {
 
       // If a file is attached, upload it to session memory first, then prepend a
       // <files> reference so the backend embeds/retrieves it for this session.
-      if (pendingFile && selectedUser?.id) {
-        // A chat session must exist before upload so the file's session_id
-        // matches the chat we send the message to.
+      if (pendingFiles.length > 0 && selectedUser?.id) {
         if (!currentChatID) {
           const created = await createChatSession(title, selectedUser.id);
           currentChatID = created.created.id;
           createdSessionId = currentChatID;
         }
 
-        const uploadRes = await uploadFile(
-          pendingFile,
-          selectedUser.id,
-          currentChatID,
-          "session",
-        );
-        finalUserText = `<files>${uploadRes.file_id}_${uploadRes.file_name}</files>${userText}`;
-        setPendingFile(null);
+        const uploadResults = [];
+        for (const file of pendingFiles) {
+          const res = await uploadFile(
+            file,
+            selectedUser.id,
+            currentChatID!,
+            "session",
+          );
+          uploadResults.push(res);
+        }
+
+        const filesTag = uploadResults
+          .map((res) => `<files>${res.file_id}_${res.file_name}</files>`)
+          .join("");
+
+        finalUserText = `${filesTag}${userText}`;
+        setPendingFiles([]);
       }
 
       const data = await sendMessage(
@@ -239,7 +247,7 @@ export default function ChatPage() {
                           <div className="flex flex-col items-start gap-1">
                             {msg.fileName && (
                               <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700 shadow-sm">
-                                <FileText  size={12} />
+                                <FileText size={12} />
                                 <span className="max-w-60 truncate">
                                   {msg.fileName}
                                 </span>
@@ -281,17 +289,27 @@ export default function ChatPage() {
       </div>
 
       <div className="mx-auto w-full max-w-3xl px-4 py-4">
-        {pendingFile && (
-          <div className="mb-2 inline-flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm shadow-sm">
-            <span className="max-w-72 truncate">{pendingFile.name}</span>
-            <button
-              type="button"
-              className="cursor-pointer text-gray-400 hover:text-gray-700"
-              onClick={() => setPendingFile(null)}
-              aria-label="Remove file"
-            >
-              <X size={14} />
-            </button>
+        {pendingFiles.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {pendingFiles.map((file, index) => (
+              <div
+                key={`${file.name}-${index}`}
+                className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm shadow-sm"
+              >
+                <span className="max-w-72 truncate">{file.name}</span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPendingFiles((prev) =>
+                      prev.filter((_, i) => i !== index),
+                    )
+                  }
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
           </div>
         )}
         <div className="bg-[#F0F5F9] rounded-2xl p-4 w-full max-w-3xl">
@@ -310,25 +328,24 @@ export default function ChatPage() {
             }}
           />
           <div className="relative flex items-center mt-5">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/pdf,.pdf"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) setPendingFile(file);
-                e.target.value = "";
+            <Upload
+              multiple
+              accept=".pdf"
+              showUploadList={false}
+              beforeUpload={(file) => {
+                setPendingFiles((prev) => [...prev, file]);
+                return false;
               }}
-            />
-            <button
-              type="button"
-              className="cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Attach a PDF file"
             >
-              <Paperclip size={18} />
-            </button>
+              <button
+                type="button"
+                className="cursor-pointer"
+                aria-label="Attach PDF files"
+              >
+                <Paperclip size={18} />
+              </button>
+            </Upload>
+
             <div className="absolute -right-2">
               {isLoading ? (
                 <Button
