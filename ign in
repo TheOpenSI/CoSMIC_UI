@@ -1,0 +1,28 @@
+[35m.gitattributes[m[36m:[m[1;31mAUTH[mORS             text
+[35msrc/api/chat.ts[m[36m:[mimport { fetchWith[1;31mAuth[m } from "./fetchWith[1;31mAuth[m";
+[35msrc/api/chat.ts[m[36m:[m  const res = await fetchWith[1;31mAuth[m(
+[35msrc/api/chat.ts[m[36m:[m  return fetchWith[1;31mAuth[m(
+[35msrc/api/chat.ts[m[36m:[m  const res: OneChatSessionResponse = await fetchWith[1;31mAuth[m(
+[35msrc/api/chat.ts[m[36m:[m  return fetchWith[1;31mAuth[m(
+[35msrc/api/configs.ts[m[36m:[mimport { fetchWith[1;31mAuth[m } from "./fetchWith[1;31mAuth[m";
+[35msrc/api/configs.ts[m[36m:[m//   const response = await fetchWith[1;31mAuth[m(
+[35msrc/api/configs.ts[m[36m:[m  return fetchWith[1;31mAuth[m(
+[35msrc/api/configs.ts[m[36m:[m  const response = await fetchWith[1;31mAuth[m(
+[35msrc/api/fetchWithAuth.ts[m[36m:[mexport async function fetchWith[1;31mAuth[m(url: string, options: RequestInit = {}) {
+[35msrc/api/fetchWithAuth.ts[m[36m:[m  // smanile: need to have token for [1;31mauth[mentication: will implement later on
+[35msrc/api/fetchWithAuth.ts[m[36m:[m        //   [1;31mAuth[morization: `Bearer ${token}`,
+[35msrc/api/models.ts[m[36m:[mimport { fetchWith[1;31mAuth[m } from "./fetchWith[1;31mAuth[m";
+[35msrc/api/models.ts[m[36m:[m  return fetchWith[1;31mAuth[m(`${import.meta.env.VITE_API_BASE_URL}/api/v1/models`);
+[35msrc/api/models.ts[m[36m:[m  return fetchWith[1;31mAuth[m(
+[35msrc/api/models.ts[m[36m:[m//   const response = await fetchWith[1;31mAuth[m(
+[35msrc/api/models.ts[m[36m:[m  const response = await fetchWith[1;31mAuth[m(
+[35msrc/api/models.ts[m[36m:[m  return fetchWith[1;31mAuth[m(
+[35msrc/api/roles.ts[m[36m:[mimport { fetchWith[1;31mAuth[m } from "./fetchWith[1;31mAuth[m";
+[35msrc/api/roles.ts[m[36m:[m  return fetchWith[1;31mAuth[m(`${import.meta.env.VITE_API_DATABASE_URL}/api/v1/roles`);
+[35msrc/api/services.ts[m[36m:[mimport { fetchWith[1;31mAuth[m } from "./fetchWith[1;31mAuth[m";
+[35msrc/api/services.ts[m[36m:[m  return fetchWith[1;31mAuth[m(
+[35msrc/api/services.ts[m[36m:[m  return fetchWith[1;31mAuth[m(
+[35msrc/api/users.ts[m[36m:[mimport { fetchWith[1;31mAuth[m } from "./fetchWith[1;31mAuth[m";
+[35msrc/api/users.ts[m[36m:[m  return fetchWith[1;31mAuth[m(`${import.meta.env.VITE_API_DATABASE_URL}/api/v1/users`);
+[35msrc/api/users.ts[m[36m:[m  return fetchWith[1;31mAuth[m(
+[35msrc/api/users.ts[m[36m:[m  return fetchWith[1;31mAuth[m(

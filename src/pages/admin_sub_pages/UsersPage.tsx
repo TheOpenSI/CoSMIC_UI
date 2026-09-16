@@ -41,23 +41,6 @@ import { getAllRoles } from "../../api/roles";
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user");
-
-  const handleModalOpen = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleModalCancel = () => {
-    setIsModalOpen(false);
-    setName("");
-    setEmail("");
-    setPassword("");
-    setRole("user");
-  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["users"],
@@ -183,7 +166,7 @@ export default function UsersPage() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
         <div className="text-3xl font-bold">Users Information</div>
-        <div>View, create, update role, and delete users</div>
+        <div>View, update role, and delete users</div>
       </div>
       <div className=" flex flex-col gap-1 mt-3">
         <div className="flex justify-between ">
@@ -191,12 +174,6 @@ export default function UsersPage() {
             Total users count:{" "}
             <span className="text-[#0079FF]">{data?.count}</span>
           </div>
-          <button
-            onClick={handleModalOpen}
-            className="flex items-center justify-center gap-1 text-[#8C8C8C] hover:text-[#0079FF] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#8C8C8C]"
-          >
-            <UserRoundPlus size={15} /> <span>Create a new user</span>
-          </button>
         </div>
       </div>
       <div>
@@ -217,46 +194,6 @@ export default function UsersPage() {
           />
         )}
       </div>
-      <Modal
-        title="Create a new user"
-        open={isModalOpen}
-        onCancel={handleModalCancel}
-        footer={null}
-      >
-        <div className="flex flex-col gap-3 mt-4">
-          <Input
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <Input
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <Input.Password
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <Select
-            value={role}
-            onChange={setRole}
-            options={[
-              { label: "User", value: "user" },
-              { label: "Admin", value: "admin" },
-            ]}
-          />
-          <Button
-            type="primary"
-            block
-            // onClick={() => handleCreate()}
-            disabled={!name || !email || !password}
-          >
-            Create User
-          </Button>
-        </div>
-      </Modal>
     </div>
   );
 }
