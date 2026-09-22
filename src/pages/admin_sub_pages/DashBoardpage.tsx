@@ -18,6 +18,8 @@ import type {
     MonthlyEmissionsStatsResponse,
     UserEmissionsSummaryResponse,
     UserEmissionsRollingResponse,
+    UserTokensResponse,
+    UserTokensRollingResponse,
 } from "../../types/DashBoard";
 
 /// --- Internal libraries --- ///
@@ -25,6 +27,8 @@ import {
     getMonthlyEmissionsStats,
     getUserEmissionsSummary,
     getUserRollingStats,
+    getUserTokens,
+    getUserTokenRollingStats,
 } from "../../api/DashBoard";
 import { useUserStore } from "../../stores/UserStore";
 
@@ -84,6 +88,8 @@ export default function DashboardPage() {
     const [monthlyStats, setMonthlyStats] = useState<MonthlyEmissionsStatsResponse | null>(null);
     const [userSummary, setUserSummary] = useState<UserEmissionsSummaryResponse | null>(null);
     const [userRolling, setUserRolling] = useState<UserEmissionsRollingResponse | null>(null);
+    const [userTokens, setUserTokens] = useState<UserTokensResponse | null>(null);
+    const [userTokenRolling, setUserTokenRolling] = useState<UserTokensRollingResponse | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [rollingLoading, setRollingLoading] = useState<boolean>(false);
     const [range, setRange] = useState<RangeOption>(3);
@@ -106,18 +112,25 @@ export default function DashboardPage() {
                     setMonthlyStats(statsRes);
                     setUserSummary(null);
                     setUserRolling(null);
+                    setUserTokens(null);
+                    setUserTokenRolling(null);
                     return;
                 }
 
-                const [statsRes, summaryRes, rollingRes] = await Promise.all([
+                const [statsRes, summaryRes,tokensRes, rollingRes , tokenRollingRes] = await Promise.all([
                     getMonthlyEmissionsStats(),
                     getUserEmissionsSummary(),
+                    getUserTokens(),
                     getUserRollingStats(range),
+                    getUserTokenRollingStats(range),
                 ]);
 
                 setMonthlyStats(statsRes);
                 setUserSummary(summaryRes);
+                setUserTokens(tokensRes);
                 setUserRolling(rollingRes);
+                setUserTokenRolling(tokenRollingRes);
+                
             } finally {
                 setLoading(false);
             }
@@ -140,8 +153,12 @@ export default function DashboardPage() {
             setRollingLoading(true);
 
             try {
-                const rollingRes = await getUserRollingStats(range);
+                const [rollingRes, tokenRollingRes] = await Promise.all([
+                    getUserRollingStats(range),
+                    getUserTokenRollingStats(range),
+                ]);
                 setUserRolling(rollingRes);
+                setUserTokenRolling(tokenRollingRes);
             } finally {
                 setRollingLoading(false);
             }
@@ -153,13 +170,21 @@ export default function DashboardPage() {
     const chartYear = monthlyStats?.year ?? new Date().getFullYear();
     const monthlyTotals = monthlyStats?.monthly_totals ?? [];
 
+
+//  Emissions dashboard settings  and summary settings 
     const totalUserEmissions = userSummary?.total_emissions ?? 0;
     const totalUserCpu = userSummary?.total_cpu_power ?? 0;
     const totalUserGpu = userSummary?.total_gpu_power ?? 0;
-    const totalTokenUsage = 0;
+    const totalTokenUsage =(userTokens?.result.user_input_token ?? 0) +  (userTokens?.result.user_output_token ?? 0);
+   
+  
+
 
     const rollingLabels = userRolling?.labels ?? [];
     const rollingUserData = userRolling?.totals ?? [];
+
+
+    
 
     const userLineChartData = useMemo(
         () => ({
@@ -213,6 +238,69 @@ export default function DashboardPage() {
         }),
         [rollingUserData]
     );
+
+    // token dashboard settings 
+
+    const tokenRollingLabels = userTokenRolling?.labels ?? [];
+    const rollingTokenInput = userTokenRolling?.input_totals ?? [];
+    const rollingTokenOutput = userTokenRolling?.output_totals ?? [];
+
+    const tokenLineChartData = useMemo(
+    () => ({
+        labels: tokenRollingLabels,
+        datasets: [
+        {
+            label: "Input tokens",
+            data: rollingTokenInput,
+            fill: false,
+            borderColor: "rgb(75, 192, 192)",
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            tension: 0.1,
+            spanGaps: false,
+        },
+        {
+            label: "Output tokens",
+            data: rollingTokenOutput,
+            fill: false,
+            borderColor: "rgb(255, 99, 132)",
+            backgroundColor: "rgba(255, 99, 132, 0.2)",
+            tension: 0.1,
+            spanGaps: false,
+        },
+        ],
+    }),
+    [tokenRollingLabels, rollingTokenInput, rollingTokenOutput],
+    );
+
+
+    const tokenLineChartOptions = useMemo(
+        () => ({
+          responsive: true,
+          animation: { duration: 400 },
+          plugins: {
+            legend: { position: "top" as const },
+            title: { display: true, text: "Your Token Usage" },
+            tooltip: {
+              callbacks: {
+                label: (context: any) => {
+                  const value = context.raw;
+                  return value === null ? "No data" : `${value} tokens`;
+                },
+              },
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "tokens" },
+              ticks: { precision: 0 },
+            },
+          },
+        }),
+        [],
+    );
+
+
 
     const yearlyBarChartData = useMemo(
         () => ({
@@ -342,10 +430,20 @@ export default function DashboardPage() {
                         )}
                     </div>
 
-                    <div className="w-1/2 h-[330px] bg-white p-4 rounded-xl border relative">
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-medium">
+                    <div
+                        className={`w-1/2 h-[330px] bg-white p-4 rounded-xl border relative transition-opacity duration-200 ${
+                            rollingLoading ? "opacity-60" : "opacity-100"
+                        }`}
+                        >
+                        {tokenLineChartData.datasets.some((ds) =>
+                            ds.data.some((val) => val !== null && val !== 0),
+                        ) ? (
+                            <Line options={tokenLineChartOptions} data={tokenLineChartData} />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-medium">
                             N/A — No data available
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>
