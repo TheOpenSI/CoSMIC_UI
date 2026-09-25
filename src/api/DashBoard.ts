@@ -8,6 +8,8 @@ import type {
   MonthlyEmissionsStatsResponse,
   UserEmissionsSummaryResponse,
   UserEmissionsRollingResponse,
+  UserTokensResponse,
+  UserTokensRollingResponse,
 } from "../types/DashBoard";
 
 
@@ -71,6 +73,24 @@ export async function getUserEmissionsSummary(): Promise<UserEmissionsSummaryRes
   );
 }
 
+export async function getUserTokens(): Promise<UserTokensResponse> {
+  const selectedUser = useUserStore.getState().selectedUser;
+
+  if (!selectedUser) {
+    return {
+      success: false,
+        result: {
+          user_input_token: 0,
+          user_output_token: 0,
+        },
+    };
+  }
+
+  return fetchWithAuth(
+    `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/tokens/user/${selectedUser.id}`,
+  );
+}
+
 /**
  * Fetch aggregated rolling monthly emissions for the selected user (line chart).
  */
@@ -95,6 +115,29 @@ export async function getUserRollingStats(
 
   return fetchWithAuth(
     `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/emissions/stats/${selectedUser.id}/rolling?${params.toString()}`,
+  );
+}
+
+export async function getUserTokenRollingStats(
+  months: 3 | 6 | 12,
+): Promise<UserTokensRollingResponse> {
+  const selectedUser = useUserStore.getState().selectedUser;
+
+  if (!selectedUser) {
+    return {
+      success: false,
+      user_id: "",
+      months,
+      labels: [],
+      input_totals: [],
+      output_totals: [],
+    };
+  }
+
+  const params = new URLSearchParams({ months: String(months) });
+
+  return fetchWithAuth(
+    `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/tokens/user/${selectedUser.id}/rolling?${params.toString()}`,
   );
 }
 

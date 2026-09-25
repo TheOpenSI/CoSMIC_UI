@@ -64,3 +64,21 @@ export interface UserEmissionsRollingResponse {
   labels: string[];
   totals: (number | null)[];
 }
+
+export interface UserTokensResponse {
+  success: boolean;
+  result: {
+    user_input_token: number;
+    user_output_token: number;
+  };
+}
+
+export interface UserTokensRollingResponse {
+  success: boolean;
+  user_id: string;
+  months: 3 | 6 | 12;
+  labels: string[];
+  input_totals: (number | null)[];
+  output_totals: (number | null)[];
+}
+
