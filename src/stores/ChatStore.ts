@@ -1,11 +1,11 @@
 import { create } from "zustand";
-import type { Message } from "../types/chats";
+import type { ChatMessage } from "../types/chats";
 
 type ChatStore = {
-  messagesByChat: { [chatID: string]: Message[] };
+  messagesByChat: { [chatID: string]: ChatMessage[] };
   loadingByChat: { [chatID: string]: boolean };
   optimisticTitleByChat: { [chatID: string]: string };
-  setMessages: (chatID: string, messages: Message[]) => void;
+  setMessages: (chatID: string, messages: ChatMessage[]) => void;
   setLoading: (chatID: string, loading: boolean) => void;
   setOptimisticTitle: (chatID: string, title: string) => void;
   resetChat: (chatID: string) => void;

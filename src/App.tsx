@@ -42,7 +42,7 @@ export default function App() {
             <Route element={<MainLayout />}>
               <Route index element={<Navigate to="/chat" replace />} />
               <Route path="/chat" element={<ChatPage />} />
-              <Route path="/chat/:chatID" element={<ChatPageWrapper />} />
+              <Route path="/chat/:chatSessionId" element={<ChatPageWrapper />} />
               <Route path="/admin" element={<AdminPage />}>
                 <Route index element={<Navigate to="users" replace />} />
                 <Route path="users" element={<UsersPage />} />

@@ -1,13 +1,13 @@
 /// --- Core libraries --- ///
-import { v7 as uuidv7 } from "uuid";
 
 
 /// --- Type hints --- ///
 import type {
-    Chat,
-    ChatSessionsResponse,
-    Message,
-    OneChatSessionResponse,
+    ChatSession,
+    ChatSessionAllResponse,
+    CosmicPayload,
+    CosmicResponse,
+	ChatSessionOneResponse,
 } from "../types/chats";
 
 
@@ -16,96 +16,62 @@ import { useUserStore } from "../stores/UserStore";
 import { fetchWithAuth } from "./fetchWithAuth";
 
 
-
+/**
+ * Send the partial chat session payload to CoSMIC.
+ *
+ * CoSMIC owns session creation, so a brand new chat passes omitted chat session
+ * ID for any attachment has already been uploaded (see `api/upload.ts`) before
+ * this call.
+ */
 export async function sendMessage(
-    message: string,
-    chatHistory: Message[],
-    chatID: string | null,
-    title: string,
-    signal?: AbortSignal,
-) {
-    // Grab pre-cached user data from React `useState()`
-    const {
-        selectedUser,
-        selectedUserRole
-    } = useUserStore.getState();
+	chatSessionId:	string | null,
+	title:			string,
+    details:		CosmicPayload["details"],
+    signal?:		AbortSignal,
+): Promise<CosmicResponse> {
+    const { selectedUser } = useUserStore.getState();
 
-    // NOTE:
-    // Example payload in YAML style:
-    //
-    //	user_message: "<user query>",
-    //		body:
-    //			user:
-    //				id: "<user UUID (version 7)>",
-    //				role: "<user role>",
-    //				email: "<user email>",
-	//				inquiry_cycle_id: "<inquiry cycle UUID (version 7)>"
-    //			messages: []
-    const res = await fetchWithAuth(
+    if (!selectedUser?.id) {
+        throw new Error("No user is selected.");
+    }
+
+    const payload: CosmicPayload = {
+		chat_session_id: chatSessionId,
+        user_id: selectedUser.id,
+        name: title,
+        details,
+    };
+
+    return fetchWithAuth(
         `${import.meta.env.VITE_API_BASE_URL}/api/v1/cosmic`,
         {
             method: "POST",
             signal,
-            body: JSON.stringify({
-                chat_id: chatID,
-                name: title,
-                user_message: message,
-                body: {
-                    user: {
-                        id: selectedUser?.id,
-						role: selectedUserRole,
-                        email: selectedUser?.email,
-						// TODO:
-						// this's temporary solution. Once starting on the PR that unified one
-						// payload format only (right now it's 2), this will get modify (the whole
-						// thing, not just this field)
-						inquiry_cycle_id: uuidv7(),
-                    },
-                    messages: chatHistory,
-                }
-            })
+            body: JSON.stringify(payload),
         }
     );
-
-    // console.log(res);
-    return res;
 }
 
 
-export async function getAllChatSessions(): Promise<ChatSessionsResponse> {
+export async function getAllChatSession(): Promise<ChatSessionAllResponse> {
     return fetchWithAuth(
         `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/chatboxes/`,
     );
 }
 
 
-export async function getOneChatSession(chatID: string): Promise<Chat> {
-    const res: OneChatSessionResponse = await fetchWithAuth(
-        `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/chatboxes/${chatID}`,
-    );
-    return res.result;
-}
-
-
-export async function deleteChatSession(chatID: string): Promise<void> {
-    return fetchWithAuth(
-        `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/chatboxes/${chatID}`,
-        { method: "DELETE" },
-    );
-}
-
-export async function sendOneDeletedChatSession(chat_id: string,user_id: string) {
-  return fetchWithAuth(
-    `${import.meta.env.VITE_API_BASE_URL}/api/v1/memory/session/delete`,
-    {
-      method: "POST",
-      body: JSON.stringify({ chat_id, user_id }),
-    },
-  );
-}
-
+/**
+ * TODO:
+ * This's not a good approach at all. We've created a ticket to address this
+ * method.
+ *
+ * Pre-create an empty chatbox so an attachment can be uploaded against a
+ * session id before the first message is sent. An empty `details` list is
+ * valid on the Chatboxes API.
+ *
+ */
 export async function createChatSession(
-    title: string,
+    title:	string,
     userId: string,
 ): Promise<{ created: { id: string } }> {
     return fetchWithAuth(
@@ -117,6 +83,40 @@ export async function createChatSession(
                 name: title,
                 details: [],
             }),
+        },
+    );
+}
+
+
+export async function getOneChatSession(chatSessionId: string): Promise<ChatSession> {
+    const res: ChatSessionOneResponse = await fetchWithAuth(
+        `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/chatboxes/${chatSessionId}`,
+    );
+    return res.result;
+}
+
+
+export async function deleteChatSession(chatSessionId: string): Promise<void> {
+    return fetchWithAuth(
+        `${import.meta.env.VITE_API_DATABASE_URL}/api/v1/chatboxes/${chatSessionId}`,
+        { method: "DELETE" },
+    );
+}
+
+
+// Tell CoSMIC to drop the on-disk/vector memory held for a deleted session
+export async function deleteNotifyChatSession(
+	chatSessionId: string,
+	userId: string,
+): Promise<void> {
+    return fetchWithAuth(
+        `${import.meta.env.VITE_API_BASE_URL}/api/v1/memory/session/delete`,
+        {
+            method: "POST",
+            body: JSON.stringify({
+				chat_session_id: chatSessionId,
+				user_id: userId
+			}),
         },
     );
 }
