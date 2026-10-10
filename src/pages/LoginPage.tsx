@@ -1,90 +1,77 @@
+/// --- Core libraries --- ///
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Alert, Button, Typography } from "antd";
-import { getLoginUrl, getRegisterUrl } from "../api/auth";
-import { useAuthStore } from "../stores/AuthStore";
+import {
+	useNavigate,
+	useSearchParams
+} from "react-router-dom";
+import {
+	Alert,
+	Button,
+	Spin,
+	Typography
+} from "antd";
 
+
+/// --- Type hints --- ///
+
+
+/// --- Internal libraries --- ///
+import { getLoginUrl } from "../api/auth";
+
+
+/**
+ * A request to `/login` hands the browser straight to Keycloak, which shows the
+ * typical username/password form + Google & Microsoft icons.
+ *
+ * If the callback came back with an `error`, we show a minimal retry card
+ * instead of redirecting again. This way, a failing IdP cannot trap the user in
+ * a redirect loop.
+ */
 export default function LoginPage() {
-  const { Title, Text, Link } = Typography;
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { user, loading, checkSession } = useAuthStore();
-  const authError = searchParams.get("error");
+	const { Text } = Typography;
+	const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
+	const authError = searchParams.get("error");
 
-  useEffect(() => {
-    void checkSession();
-  }, [checkSession]);
+	useEffect(
+		() => {
+			if (!authError) {
+				window.location.replace(getLoginUrl());
+			}
+		},
+		[authError]
+	);
 
-  useEffect(() => {
-    if (!loading && user) {
-      navigate("/chat", { replace: true });
-    }
-  }, [loading, user, navigate]);
+	if (!authError) {
+		return (
+			<div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white px-4">
+				<Spin size="large" />
+				<Text type="secondary">Redirecting to sign in…</Text>
+			</div>
+		);
+	}
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-start pt-14 bg-white px-4">
-      <Title level={1} className="mb-10!">
-        Welcome to CoSMIC
-      </Title>
-
-      <div className="w-full max-w-md flex flex-col gap-4">
-        {authError ? (
-          <Alert
-            type="error"
-            showIcon
-            message="Sign-in failed"
-            description="Please try again or contact your administrator."
-          />
-        ) : null}
-
-        <Text type="secondary">
-          Choose how you want to sign in. You will be redirected to the
-          identity provider securely.
-        </Text>
-
-        <Button
-          type="primary"
-          size="large"
-          className="w-full h-12"
-          loading={loading}
-          onClick={() => {
-            window.location.href = getLoginUrl("keycloak");
-          }}
-        >
-          Log in / Sign up with Keycloak
-        </Button>
-
-        <Button
-          size="large"
-          className="w-full h-12"
-          loading={loading}
-          onClick={() => {
-            window.location.href = getLoginUrl("google");
-          }}
-        >
-          Continue with Google
-        </Button>
-
-        <Button
-            size="large"
-            className="w-full h-12"
-            loading={loading}
-            onClick={() => { window.location.href = getLoginUrl("azure"); 
-
-            }}
-          >
-            Sign in with Microsoft
-        </Button>
-
-
-        {/* as of now no register option for users is available */}
-
-        {/* <div className="flex flex-col items-center gap-2 pt-2">
-          <Link href={getRegisterUrl()}>
-            Don&apos;t have an account? Sign up (Keycloak)
-          </Link>
-        </div> */}
-      </div>
-    </div>
-  );
+	return (
+		<div className="min-h-screen flex flex-col items-center justify-start pt-14 bg-white px-4">
+			<div className="w-full max-w-md flex flex-col gap-4">
+				<Alert
+					type="error"
+					showIcon
+					title="Sign-in failed"
+					description="Please try again or contact your administrator."
+				/>
+				<Button
+					type="primary"
+					size="large"
+					className="w-full h-12"
+					onClick={() => {
+						navigate("/login", { replace: true });
+						window.location.replace(getLoginUrl());
+					}}
+				>
+				Try again
+				</Button>
+			</div>
+		</div>
+	);
 }
