@@ -6,7 +6,6 @@ import {
   useParams,
 } from "react-router-dom";
 import RequireAuth from "./components/auth/RequireAuth";
-import RegisterPage from "./pages/RegisterPage";
 import MainLayout from "./layout/MainLayout";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
@@ -33,9 +32,8 @@ export default function App() {
   return (
     <BrowserRouter>
         <Routes>
-          {/* Public — no auth required */}
+          {/* Public — the platform redirects straight to Keycloak */}
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
 
           {/* Protected — must be logged in */}
           <Route element={<RequireAuth />}>
