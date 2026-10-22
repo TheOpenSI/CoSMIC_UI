@@ -80,19 +80,6 @@ export default function UsersPage() {
 		},
 	});
 
-	// TODO:
-	// const { mutate: handleCreate } = useMutation({
-	//   mutationFn: () => createOneUser({ name, email, password, role }),
-	//   onSuccess: () => {
-	//     queryClient.invalidateQueries({ queryKey: ["users"] });
-	//     message.success("User created!");
-	//     handleModalCancel();
-	//   },
-	//   onError: () => {
-	//     message.error("Create failed");
-	//   },
-	// });
-
 	const columns = [
 		{
 			title: "Name",
