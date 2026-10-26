@@ -7,6 +7,9 @@ export type AuthUser = {
 	sub: string;
 	email?: string;
 	name?: string;
+	/**
+	 * Keycloak realm roles (e.g. `admin`, `user`).
+	 */
 	roles: string[];
 	provider?: string;
 };
