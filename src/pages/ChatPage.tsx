@@ -104,6 +104,7 @@ export default function ChatPage() {
 
     setMessages(chatKey, updatedHistory);
     setMessage("");
+    setFileList([]);
     setLoading(chatKey, true);
     setOptimisticTitle(chatKey, userText.slice(0, 40));
 
@@ -147,7 +148,6 @@ export default function ChatPage() {
         }
 
         finalUserText = `<files>${fileRefs.join(",")}</files>${userText}`;
-        setFileList([]);
       }
 
       // CoSMIC rebuilds the LLM context from the full history, so send every
@@ -376,7 +376,7 @@ export default function ChatPage() {
               showUploadList={false}
               accept="application/pdf,.pdf"
               fileList={fileList}
-              openFileDialogOnClick={fileList.length < MAX_FILES}
+              openFileDialogOnClick={!isLoading && fileList.length < MAX_FILES}
               beforeUpload={(file, batch) => {
                 if (fileList.some((f) => f.name === file.name)) {
                   antdMessage.warning(`${file.name} is already attached`);
