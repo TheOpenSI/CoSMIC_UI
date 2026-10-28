@@ -1,8 +1,7 @@
 /// --- Core libraries --- ///
 import { Button, Input, Spin, Upload, message as antdMessage } from "antd";
 import type { UploadFile } from "antd";
-import { CirclePause, Orbit, Paperclip, FileText, Send } from "lucide-react";
-
+import { CirclePause, Orbit, Paperclip, FileText, Send, X } from "lucide-react";
 import { v7 as uuidv7 } from "uuid";
 import { BsPersonFill } from "react-icons/bs";
 import dayjs from "dayjs";
@@ -330,6 +329,30 @@ export default function ChatPage() {
       </div>
 
       <div className="mx-auto w-full max-w-3xl px-4 py-4">
+        {fileList.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {fileList.map((file) => (
+              <div
+                key={file.uid}
+                className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm shadow-sm"
+              >
+                <FileText size={14} className="text-gray-500" />
+                <span className="max-w-60 truncate">{file.name}</span>
+                <button
+                  type="button"
+                  className="cursor-pointer text-gray-400 hover:text-gray-700"
+                  onClick={() =>
+                    setFileList(fileList.filter((f) => f.uid !== file.uid))
+                  }
+                  aria-label={`Remove ${file.name}`}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="bg-[#F0F5F9] rounded-2xl p-4 w-full max-w-3xl">
           <TextArea
             value={message}
@@ -347,18 +370,10 @@ export default function ChatPage() {
           />
 
           <div className="relative flex items-center mt-5">
-            {/* <button
-    						type="button"
-    						className="cursor-pointer"
-    						onClick={() => fileInputRef.current?.click()}
-    						aria-label="Attach a PDF file"
-    					>
-    						<Paperclip size={18} />
-    					</button> */}
-
             <Upload
               multiple
               maxCount={MAX_FILES}
+              showUploadList={false}
               accept="application/pdf,.pdf"
               fileList={fileList}
               openFileDialogOnClick={fileList.length < MAX_FILES}
